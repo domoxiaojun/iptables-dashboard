@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 
 // Stripe-warm button system:
@@ -11,6 +12,10 @@ import { cn } from '@/lib/utils';
 //
 // Hover: translateY(-1px) + 阴影深一档 (150ms ease-out)
 // Active: translateY(0) + scale(.98)
+//
+// `asChild` (radix Slot) lets a Button inherit a different element so
+// composing with <Link> or radix triggers (Dialog/DropdownMenu/Tooltip)
+// works without nesting <button> inside <button>.
 
 export type ButtonVariant =
   | 'primary'
@@ -59,15 +64,19 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  asChild?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(base, variantClasses[variant], sizeClasses[size], className)}
-      {...props}
-    />
-  ),
+  ({ className, variant = 'primary', size = 'md', asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return (
+      <Comp
+        ref={ref as React.Ref<HTMLButtonElement>}
+        className={cn(base, variantClasses[variant], sizeClasses[size], className)}
+        {...props}
+      />
+    );
+  },
 );
 Button.displayName = 'Button';

@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { Link, Outlet, useNavigate } from '@tanstack/react-router';
+import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Button } from '@/components/ui/Button';
 import { SyncBadge } from '@/components/rules/SyncBadge';
 import { useMe } from '@/api/queries';
 import { api } from '@/lib/api';
+import { useTheme, type Theme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
 const navTop = [
@@ -25,6 +26,23 @@ export const AppShell: React.FC = () => {
   const { data: me } = useMe();
   const initial = (me?.username ?? '?').slice(0, 1).toUpperCase();
 
+  // Mobile drawer state. Auto-closes when the route changes so a nav click
+  // doesn't leave the overlay covering the new page.
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  React.useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+  // Lock body scroll while the drawer is open.
+  React.useEffect(() => {
+    if (!drawerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [drawerOpen]);
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -36,24 +54,49 @@ export const AppShell: React.FC = () => {
 
   return (
     <div className="bg-aurora-warm relative flex min-h-screen">
+      {/* Mobile overlay */}
+      {drawerOpen && (
+        <button
+          type="button"
+          aria-label="关闭侧栏"
+          onClick={() => setDrawerOpen(false)}
+          className="fixed inset-0 z-30 bg-canvas-deep/40 backdrop-blur-sm lg:hidden"
+        />
+      )}
+
       <aside
         className={cn(
-          'sticky top-0 z-20 flex h-screen w-60 shrink-0 flex-col',
-          'border-r border-[var(--c-hairline)] bg-canvas/60 backdrop-blur-md',
+          'flex h-screen w-60 shrink-0 flex-col',
+          'border-r border-[var(--c-hairline)] bg-canvas/90 backdrop-blur-md',
+          // Desktop: sticky in flow.
+          'lg:sticky lg:top-0 lg:z-20 lg:bg-canvas/60',
+          // Mobile: fixed drawer that slides in.
+          'fixed inset-y-0 left-0 z-40 transition-transform duration-med ease-out lg:translate-x-0',
+          drawerOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex items-center gap-2.5 px-5 pb-7 pt-7">
-          <div className="grid h-8 w-8 place-items-center rounded-md bg-grad-brand text-sm font-bold text-white shadow-2">
-            ▸
-          </div>
-          <div className="leading-tight">
-            <div className="text-[15px] font-bold tracking-tight text-ink-strong">
-              iptables
+        <div className="flex items-center justify-between gap-2.5 px-5 pb-7 pt-7">
+          <div className="flex items-center gap-2.5">
+            <div className="grid h-8 w-8 place-items-center rounded-md bg-grad-brand text-sm font-bold text-white shadow-2">
+              ▸
             </div>
-            <div className="text-[11px] text-ink-dim">
-              v0.1.0 · {me?.username ?? '...'}
+            <div className="leading-tight">
+              <div className="text-[15px] font-bold tracking-tight text-ink-strong">
+                iptables
+              </div>
+              <div className="text-[11px] text-ink-dim">
+                v0.1.0 · {me?.username ?? '...'}
+              </div>
             </div>
           </div>
+          <button
+            type="button"
+            aria-label="关闭侧栏"
+            onClick={() => setDrawerOpen(false)}
+            className="grid h-7 w-7 place-items-center rounded-md text-ink-dim hover:bg-canvas-tint hover:text-ink-strong transition-colors duration-fast lg:hidden"
+          >
+            <CloseIcon />
+          </button>
         </div>
 
         <NavSection title="面板" items={navTop} />
@@ -80,16 +123,25 @@ export const AppShell: React.FC = () => {
       </aside>
 
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-[60px] items-center gap-3 border-b border-[var(--c-hairline)] bg-canvas/70 px-8 backdrop-blur-md">
+        <header className="sticky top-0 z-10 flex h-[60px] items-center gap-3 border-b border-[var(--c-hairline)] bg-canvas/70 px-4 sm:px-6 lg:px-8 backdrop-blur-md">
+          <button
+            type="button"
+            aria-label="打开侧栏"
+            onClick={() => setDrawerOpen(true)}
+            className="grid h-9 w-9 place-items-center rounded-md text-ink-muted hover:bg-canvas-tint hover:text-ink-strong transition-colors duration-fast lg:hidden"
+          >
+            <MenuIcon />
+          </button>
           <SyncBadge />
           <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => location.reload()}>
-              <RefreshIcon /> 刷新
+              <RefreshIcon /> <span className="hidden sm:inline">刷新</span>
             </Button>
           </div>
         </header>
 
-        <main className="relative flex-1 overflow-x-hidden p-8">
+        <main className="relative flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
@@ -147,6 +199,49 @@ function svg(path: React.ReactNode) {
     >
       {path}
     </svg>
+  );
+}
+
+const ThemeToggle: React.FC = () => {
+  const { theme, setTheme, resolved } = useTheme();
+  // Cycle: light → dark → system → light. Icon shows currently *active* mode.
+  const next: Theme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
+  const label =
+    theme === 'system' ? `跟随系统 (${resolved === 'dark' ? '夜' : '日'})` : theme === 'dark' ? '夜间' : '日间';
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(next)}
+      title={`主题: ${label} → 点击切到 ${next}`}
+      aria-label={`切换主题（当前 ${label}）`}
+      className={cn(
+        'inline-flex h-8 w-8 items-center justify-center rounded-md',
+        'text-ink-muted hover:text-ink-strong hover:bg-canvas-tint',
+        'transition-colors duration-fast',
+      )}
+    >
+      {theme === 'system' ? <SystemIcon /> : resolved === 'dark' ? <MoonIcon /> : <SunIcon />}
+    </button>
+  );
+};
+
+function SunIcon() {
+  return svg(
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </>,
+  );
+}
+function MoonIcon() {
+  return svg(<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />);
+}
+function SystemIcon() {
+  return svg(
+    <>
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M8 20h8M12 16v4" />
+    </>,
   );
 }
 
@@ -227,6 +322,20 @@ function RefreshIcon() {
     <>
       <path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" />
       <path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" />
+    </>,
+  );
+}
+function MenuIcon() {
+  return svg(
+    <>
+      <path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" />
+    </>,
+  );
+}
+function CloseIcon() {
+  return svg(
+    <>
+      <path d="M6 6l12 12" /><path d="M18 6L6 18" />
     </>,
   );
 }

@@ -32,12 +32,35 @@
     --radius: 10px;
   }
 
+  :root[data-theme='dark'] {
+    --background: 213 50% 10%;         /* #0A1628 */
+    --foreground: 220 30% 94%;         /* #E8EDF5 */
+    --card: 215 50% 13%;               /* #0F1E33 */
+    --card-foreground: 220 30% 94%;
+    --primary: 245 100% 70%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 40% 16%;
+    --secondary-foreground: 220 30% 94%;
+    --muted: 215 40% 16%;
+    --muted-foreground: 215 18% 60%;
+    --accent: 245 100% 70%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 70%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.20;
+    --ring: 245 100% 70%;
+  }
+
   * {
     border-color: var(--c-hairline);
   }
 
   html, body, #root {
     height: 100%;
+  }
+  html {
+    color-scheme: light dark;
   }
   body {
     background: var(--c-bg);
@@ -49,6 +72,8 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
+    transition: background-color var(--t-med) var(--ease-out),
+                color var(--t-med) var(--ease-out);
   }
 
   /* Tabular numerals on data grids */

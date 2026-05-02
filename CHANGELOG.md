@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 暗色模式（system 跟随 OS / light / dark 三态切换，AppShell 顶栏图标按钮，启动期 bootstrapTheme 防 FOUC）
+- 全局 Toast 通知（sonner）：改密、apply confirm/abort/expired、TOCTOU 冲突等关键路径
+- 顶层 ErrorBoundary（不让未捕获异常变白屏；恢复 / 刷新双按钮）
+- QueryBoundary 组件 + 默认 Skeleton + Error retry 卡片（已接入 AuditPage 示范）
+- AppShell mobile 抽屉（< lg 时变 fixed drawer + overlay，hamburger 触发，路由变化自动关）
+- Dialog 升级为 @radix-ui/react-dialog（focus trap / portal / scroll lock / 真正可访问），保持原对外 API + 新 `dismissable` prop
+- 新增 Tooltip、DropdownMenu 组件（基于 radix），Button 支持 `asChild`（radix Slot）
 - IP 白名单（`security.allowed_ips`，支持精确 IP + CIDR；loopback 访问 `/api/v1/health` 始终放行）
 
 ### Changed

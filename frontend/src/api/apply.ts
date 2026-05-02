@@ -9,6 +9,7 @@
 
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
 import type {
   ApplyResp,
@@ -95,6 +96,14 @@ export function useApply(opts: UseApplyOptions = {}): UseApplyReturn {
           e instanceof ApiError ? e.message : (e as Error).message ?? 'apply failed';
         setError(msg);
         setGuardBlock(null);
+        // 409 conflict (TOCTOU) gets a friendlier hint.
+        if (e instanceof ApiError && e.status === 409) {
+          toast.error('内核规则已变化', {
+            description: '请重新预览后再应用（TOCTOU 冲突）',
+          });
+        } else {
+          toast.error('应用失败', { description: msg });
+        }
       } finally {
         setBusy(false);
       }

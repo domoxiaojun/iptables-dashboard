@@ -124,3 +124,45 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================================
+ * Dark theme — opt in via [data-theme="dark"] on <html>
+ *
+ * The warm-cream palette inverts to a deep navy that keeps the same
+ * "expensive editorial" feel rather than going pure black. Brand
+ * gradient + status colors stay identical so audits / SSE indicators
+ * read the same in both modes.
+ * ============================================================================ */
+
+:root[data-theme='dark'] {
+  --c-bg: #0A1628;
+  --c-bg-card: #0F1E33;
+  --c-bg-soft: #15263F;
+  --c-bg-tint: #182B47;
+  --c-bg-deep: #FCFBF7;
+
+  --c-text: #E8EDF5;
+  --c-text-strong: #FFFFFF;
+  --c-text-muted: #A0AEC2;
+  --c-text-dim: #6B7E96;
+  --c-text-faint: #4A5A72;
+
+  --c-hairline: rgba(255, 255, 255, 0.08);
+  --c-hairline-strong: rgba(255, 255, 255, 0.16);
+  --c-hairline-input: rgba(255, 255, 255, 0.20);
+
+  --c-accent-tint: rgba(99, 91, 255, 0.18);
+  --c-accent-tint-strong: rgba(99, 91, 255, 0.28);
+
+  --c-success-tint: rgba(0, 200, 140, 0.16);
+  --c-success-tint-strong: rgba(0, 200, 140, 0.28);
+  --c-danger-tint: rgba(248, 113, 113, 0.16);
+  --c-danger-tint-strong: rgba(248, 113, 113, 0.28);
+  --c-warn-tint: rgba(251, 146, 60, 0.16);
+  --c-info-tint: rgba(96, 165, 250, 0.16);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 1px rgba(0, 0, 0, 0.20);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-pop: 0 24px 48px rgba(0, 0, 0, 0.50), 0 4px 8px rgba(0, 0, 0, 0.30);
+}

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { CountdownRing } from '@/components/react-bits/CountdownRing';
@@ -78,7 +79,12 @@ export const TwoStepConfirmModal: React.FC<{
     setBusy(true);
     try {
       await api.post(`/apply/${token}/confirm`);
+      toast.success('变更已保留', { description: '规则继续生效' });
       onResolved('confirmed');
+    } catch (e) {
+      toast.error('确认失败', {
+        description: e instanceof ApiError ? e.message : '网络错误',
+      });
     } finally {
       setBusy(false);
     }
@@ -87,7 +93,12 @@ export const TwoStepConfirmModal: React.FC<{
     setBusy(true);
     try {
       await api.post(`/apply/${token}/abort`);
+      toast.info('已回滚到旧规则');
       onResolved('aborted');
+    } catch (e) {
+      toast.error('回滚失败', {
+        description: e instanceof ApiError ? e.message : '网络错误',
+      });
     } finally {
       setBusy(false);
     }
@@ -101,6 +112,7 @@ export const TwoStepConfirmModal: React.FC<{
       onOpenChange={() => {
         /* not dismissable except via the buttons */
       }}
+      dismissable={false}
       title="变更已应用 — 请确认保留"
       description="如果你被锁在外面，无需操作。倒计时归零后将自动回滚到旧规则。"
       className="max-w-md"

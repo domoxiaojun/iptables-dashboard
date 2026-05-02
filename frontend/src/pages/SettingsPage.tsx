@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 import { useMe } from '@/api/queries';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -93,11 +94,6 @@ export const SettingsPage: React.FC = () => {
 
 const ChangePasswordCard: React.FC = () => {
   const [busy, setBusy] = React.useState(false);
-  const [status, setStatus] = React.useState<
-    | { kind: 'ok' }
-    | { kind: 'err'; message: string }
-    | null
-  >(null);
   const {
     register,
     handleSubmit,
@@ -107,13 +103,12 @@ const ChangePasswordCard: React.FC = () => {
 
   const onSubmit = async (v: PwForm) => {
     setBusy(true);
-    setStatus(null);
     try {
       await api.post('/auth/change-password', {
         old_password: v.old_password,
         new_password: v.new_password,
       });
-      setStatus({ kind: 'ok' });
+      toast.success('密码已更新', { description: '下次登录使用新密码' });
       reset();
     } catch (e) {
       const msg =
@@ -122,7 +117,7 @@ const ChangePasswordCard: React.FC = () => {
             ? '旧密码不正确'
             : e.message
           : (e as Error).message;
-      setStatus({ kind: 'err', message: msg });
+      toast.error('更新失败', { description: msg });
     } finally {
       setBusy(false);
     }
@@ -171,17 +166,6 @@ const ChangePasswordCard: React.FC = () => {
               {...register('confirm')}
             />
           </Field>
-
-          {status?.kind === 'ok' && (
-            <div className="rounded-md border border-success/30 bg-success-tint px-3 py-2 text-sm text-success">
-              ✓ 密码已更新。下次登录使用新密码。
-            </div>
-          )}
-          {status?.kind === 'err' && (
-            <div className="rounded-md border border-danger/30 bg-danger-tint px-3 py-2 text-sm text-danger">
-              ⚠ {status.message}
-            </div>
-          )}
 
           <div className="flex justify-end">
             <Button type="submit" variant="primary" disabled={busy}>
