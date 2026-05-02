@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>05 — Swiss Modernism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FFFFFF;
+    --ink: #0A0A0A;
+    --soft: #545454;
+    --rule: #DCDCDC;
+    --rule-faint: #F0F0F0;
+    --red: #E10600;
+    --grid-overlay: rgba(0,0,0,.025);
+    --sans: 'Schibsted Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 12-column visible grid backdrop */
+  .grid-bg {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(90deg, var(--grid-overlay) 1px, transparent 1px);
+    background-size: calc(100% / 12) 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 32px 48px 64px;
+  }
+
+  /* Top bar — minimal black bar, like Swiss highway sign */
+  .top {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+    border-top: 4px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 16px 0;
+    margin-bottom: 0;
+  }
+  .brand {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .brand sup {
+    font-family: var(--mono);
+    font-size: 9px; font-weight: 400;
+    color: var(--soft);
+    letter-spacing: 0.16em;
+    margin-left: 6px;
+    vertical-align: super;
+  }
+  .top nav {
+    display: flex; gap: 0;
+    justify-self: start;
+    margin-left: 32px;
+  }
+  .top nav a {
+    padding: 8px 16px;
+    color: var(--ink);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    border-right: 1px solid var(--rule);
+    transition: color 100ms;
+  }
+  .top nav a:first-child { padding-left: 0; }
+  .top nav a:hover { color: var(--red); }
+  .top nav a.active { color: var(--red); font-weight: 700; }
+  .top .right {
+    display: flex; gap: 14px; align-items: center;
+    font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.16em;
+  }
+  .top .right .live::before {
+    content: '●'; color: var(--red); margin-right: 6px;
+  }
+
+  /* Hero — gigantic typography */
+  .hero {
+    padding: 84px 0 48px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    color: var(--soft);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: clamp(80px, 12vw, 168px);
+    line-height: 0.86;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+  }
+  h1 .red { color: var(--red); }
+  h1 .ital { font-style: italic; font-weight: 400; }
+  .hero-foot {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: end;
+  }
+  .lede {
+    max-width: 540px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--soft);
+  }
+  .hero-meta {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--soft);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    line-height: 1.7;
+  }
+
+  /* Stats — Swiss data table */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--ink);
+  }
+  .stats > div {
+    padding: 22px 0;
+    border-right: 1px solid var(--rule);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 12px;
+  }
+  .stats > div:last-child { border-right: 0; }
+  .stats > div { padding-left: 24px; }
+  .stats > div:first-child { padding-left: 0; }
+  .stats .lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--soft);
+  }
+  .stats .num {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 64px;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+  }
+  .stats .num.red { color: var(--red); }
+  .stats .delta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--soft);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  /* Section title — heavy black bar */
+  .section {
+    padding: 48px 0 0;
+  }
+  .section-head {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 20px;
+    align-items: end;
+    border-bottom: 4px solid var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 0;
+  }
+  .section-num {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 64px;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+  .section-head h2 {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: -0.025em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .section-head h2 .red { color: var(--red); }
+  .section-head .control {
+    display: inline-flex;
+    border: 2px solid var(--ink);
+  }
+  .section-head .control button {
+    padding: 8px 14px;
+    background: transparent; border: 0;
+    border-right: 1px solid var(--ink);
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .section-head .control button:last-child { border-right: 0; }
+  .section-head .control button.on {
+    background: var(--ink); color: var(--paper); font-weight: 700;
+  }
+
+  /* Filter row */
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .filter-row > * {
+    padding: 14px 18px;
+    border-right: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--soft);
+  }
+  .filter-row > *:first-child { padding-left: 0; }
+  .filter-row > *:last-child { border-right: 0; }
+  .filter-row b { color: var(--ink); }
+  .filter-row .new {
+    background: var(--red);
+    color: var(--paper);
+    font-weight: 700;
+    border: 0;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .filter-row .new:hover { background: var(--ink); }
+
+  /* Table — pure Swiss */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-bottom: 1px solid var(--ink);
+  }
+  th {
+    text-align: left;
+    padding: 14px 18px 12px;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--soft);
+    border-bottom: 2px solid var(--ink);
+  }
+  th:first-child { padding-left: 0; }
+  th:last-child { padding-right: 0; text-align: right; }
+  td {
+    padding: 18px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: middle;
+    font-size: 14px;
+  }
+  td:first-child { padding-left: 0; }
+  td:last-child { padding-right: 0; text-align: right; }
+  tbody tr {
+    transition: background 100ms;
+  }
+  tbody tr:hover {
+    background: var(--rule-faint);
+  }
+  tbody tr:hover td:first-child { box-shadow: -8px 0 0 var(--red); }
+  td .seq {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    width: 40px; display: inline-block;
+  }
+  td .raw {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+  }
+  td .raw .v { color: var(--soft); }
+  td .accept { color: var(--ink); font-weight: 700; }
+  td .drop {
+    color: var(--paper);
+    background: var(--red);
+    padding: 2px 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+  }
+  td .hits {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--soft);
+    font-feature-settings: 'tnum';
+  }
+  td .hits b {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Manifest */
+  .manifest {
+    margin-top: 64px;
+    border-top: 4px solid var(--red);
+    padding-top: 18px;
+  }
+  .manifest-head {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 20px;
+    align-items: end;
+    margin-bottom: 32px;
+  }
+  .manifest-head h2 {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+  }
+  .manifest-head h2 .n { color: var(--red); }
+  .manifest table th {
+    color: var(--ink);
+    border-bottom-color: var(--red);
+  }
+  .manifest .op {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .manifest .op.del { background: var(--red); }
+  .manifest .x {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    background: transparent;
+    border: 1px solid var(--rule);
+    padding: 8px 14px;
+    color: var(--soft);
+    cursor: pointer;
+  }
+  .manifest .x:hover { border-color: var(--ink); color: var(--ink); }
+
+  .commit {
+    margin-top: 32px;
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    border: 4px solid var(--ink);
+  }
+  .commit .meta {
+    flex: 1;
+    padding: 22px 28px;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--soft);
+    line-height: 1.7;
+  }
+  .commit .meta b { color: var(--ink); }
+  .commit button {
+    padding: 0 64px;
+    border: 0;
+    background: var(--red);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 100ms;
+    border-left: 4px solid var(--ink);
+  }
+  .commit button:hover { background: var(--ink); }
+
+  /* Colophon */
+  .colophon {
+    margin-top: 96px;
+    padding-top: 22px;
+    border-top: 1px solid var(--ink);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--soft);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+
+  <header class="top">
+    <div class="brand">IPTABLES<sup>v0.1.0</sup></div>
+    <nav>
+      <a>OVERVIEW</a>
+      <a class="active">RULES</a>
+      <a>DIFF</a>
+      <a>SNAPSHOTS</a>
+      <a>TEMPLATES</a>
+      <a>LOGS</a>
+      <a>AUDIT</a>
+      <a>SETTINGS</a>
+    </nav>
+    <div class="right">
+      <span class="live">LIVE 2s</span>
+      <span>UTC 04:11:23</span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="kicker">02 — RULES — IPv4 — FILTER — INPUT</div>
+    <h1>FORTY<br>—<span class="red">TWO</span>—<br>RULES.</h1>
+    <div class="hero-foot">
+      <p class="lede">Twenty-three on IPv4. Twenty-one on IPv6. Five out of sync. Three changes
+        staged, none yet committed to the kernel. The two-step activation grace
+        is set to thirty seconds.</p>
+      <div class="hero-meta">
+        BUILD 0a4f8c<br>
+        OPERATOR · ADMIN<br>
+        POLLED 04:11:23 UTC<br>
+        BACKEND iptables-nft
+      </div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div>
+      <div class="lbl">v4</div>
+      <div>
+        <div class="num">23</div>
+        <div class="delta">+2 this hour</div>
+      </div>
+    </div>
+    <div>
+      <div class="lbl">v6</div>
+      <div>
+        <div class="num">21</div>
+        <div class="delta">±0</div>
+      </div>
+    </div>
+    <div>
+      <div class="lbl">Drift</div>
+      <div>
+        <div class="num red">05</div>
+        <div class="delta">paired diff</div>
+      </div>
+    </div>
+    <div>
+      <div class="lbl">Counter</div>
+      <div>
+        <div class="num">14.7M</div>
+        <div class="delta">bytes accepted</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="section-num">02.</div>
+      <h2>The <span class="red">Rules</span> in their order.</h2>
+      <div class="control">
+        <button class="on">v4</button>
+        <button>v6</button>
+        <button>BOTH</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <span><b>filter</b> / <b>INPUT</b> · 7 entries · default ACCEPT</span>
+      <span>SEARCH —</span>
+      <button class="new">+ NEW RULE</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:80px">№</th>
+          <th>Rule</th>
+          <th style="width:200px; text-align:right">Hits</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="seq">01</span></td>
+          <td><span class="raw"><span class="v">-i</span> lo <span class="v">-j</span> <span class="accept">ACCEPT</span></span></td>
+          <td><div class="hits"><b>42</b>3.3 KB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">02</span></td>
+          <td><span class="raw"><span class="v">-m</span> conntrack <span class="v">--ctstate</span> ESTABLISHED,RELATED <span class="v">-j</span> <span class="accept">ACCEPT</span></span></td>
+          <td><div class="hits"><b>112,394</b>14.7 MB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">03</span></td>
+          <td><span class="raw"><span class="v">-p</span> tcp <span class="v">--dport</span> 22 <span class="v">-j</span> <span class="accept">ACCEPT</span></span></td>
+          <td><div class="hits"><b>12,341</b>982 KB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">04</span></td>
+          <td><span class="raw"><span class="v">-p</span> tcp <span class="v">--dport</span> 443 <span class="v">-j</span> <span class="accept">ACCEPT</span></span></td>
+          <td><div class="hits"><b>88,420</b>6.2 MB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">05</span></td>
+          <td><span class="raw"><span class="v">-j</span> <span class="drop">DROP</span></span></td>
+          <td><div class="hits"><b>8,491</b>421 KB</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="manifest">
+    <div class="manifest-head">
+      <div class="section-num" style="color:var(--red)">03.</div>
+      <h2>STAGED — <span class="n">3</span> changes await.</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:80px">Op</th>
+          <th>Change</th>
+          <th style="width:140px; text-align:right">—</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="op">ADD</span></td>
+          <td><span class="raw">filter/INPUT &nbsp;<span class="v">-p</span> udp <span class="v">--dport</span> 53 <span class="v">-j</span> ACCEPT &nbsp;&nbsp;<span class="v">(also IPv6)</span></span></td>
+          <td><button class="x">DISCARD</button></td>
+        </tr>
+        <tr>
+          <td><span class="op">MOD</span></td>
+          <td><span class="raw">filter/INPUT#3 &nbsp;<span class="v">--dport</span> 22 → <b>22,2222</b></span></td>
+          <td><button class="x">DISCARD</button></td>
+        </tr>
+        <tr>
+          <td><span class="op del">DEL</span></td>
+          <td><span class="raw">filter/INPUT#5 &nbsp;<span class="v">(default DROP)</span></span></td>
+          <td><button class="x">DISCARD</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="commit">
+      <div class="meta">
+        ON COMMIT — A PRE-SNAPSHOT IS WRITTEN.<br>
+        ROLLBACK IS AUTOMATIC AFTER <b>30 SECONDS</b><br>
+        UNLESS THIS COMMIT IS CONFIRMED.
+      </div>
+      <button>APPLY ⟶</button>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <span>SET IN SCHIBSTED GROTESK / JETBRAINS MONO · 12-COL GRID · MAX 1320</span>
+    <span>BUILD 0a4f8c · MAY 02, 2026</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iptables-dashboard · 设计预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FCFBF7;
+    --bg-card: #FFFFFF;
+    --text: #0A2540;
+    --text-strong: #051324;
+    --text-muted: #5C6A7A;
+    --text-dim: #8B95A3;
+    --hairline: rgba(10, 37, 64, 0.06);
+    --hairline-strong: rgba(10, 37, 64, 0.12);
+    --grad: linear-gradient(135deg, #635BFF 0%, #4F89FF 50%, #2DD4BF 100%);
+    --accent: #635BFF;
+    --accent-tint: rgba(99,91,255,.08);
+    --green: #00875F;
+    --red: #DC2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed; top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(99,91,255,.12) 0%, transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; bottom: -300px; right: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(45,212,191,.10) 0%, transparent 70%);
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 1100px; margin: 0 auto;
+    padding: 60px 40px 80px;
+  }
+  .kicker {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--accent-tint);
+    color: var(--accent);
+    font-size: 12px; font-weight: 600;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-size: 44px; font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: var(--text-strong);
+    margin-bottom: 12px;
+  }
+  h1 .accent {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 600;
+  }
+  .lede {
+    color: var(--text-muted);
+    font-size: 17px;
+    max-width: 640px;
+    margin-bottom: 48px;
+  }
+
+  .hero {
+    background: var(--bg-card);
+    border: 1px solid var(--hairline);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 12px 40px rgba(10,37,64,.08), 0 4px 12px rgba(10,37,64,.04);
+    text-decoration: none;
+    color: inherit;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hero:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 60px rgba(10,37,64,.12), 0 8px 16px rgba(10,37,64,.06);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -80px;
+    width: 280px; height: 280px;
+    background: var(--grad);
+    opacity: 0.10;
+    border-radius: 50%;
+    filter: blur(40px);
+  }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: rgba(0,135,95,.10);
+    color: var(--green);
+    font-size: 11px; font-weight: 600;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .hero .badge::before { content: '✓'; font-size: 11px; }
+  .hero h2 {
+    font-size: 24px; font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    color: var(--text-strong);
+  }
+  .hero p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .hero .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .hero .tag {
+    padding: 3px 10px;
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    color: var(--text-muted);
+  }
+  .hero .preview {
+    height: 200px;
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    padding: 20px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+  .hero .preview-stat {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .hero .preview-stat > div {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .hero .preview-stat .l {
+    font-size: 10px; color: var(--text-dim); margin-bottom: 4px;
+  }
+  .hero .preview-stat .v {
+    font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+  }
+  .hero .preview-stat .v.r { color: var(--red); }
+  .hero .preview-rule {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+  .hero .preview-rule .v { color: var(--text-dim); }
+  .hero .preview-rule .pill {
+    margin-left: auto;
+    padding: 1px 8px;
+    background: rgba(0,135,95,.1);
+    color: var(--green);
+    font-family: 'Plus Jakarta Sans';
+    font-size: 9px; font-weight: 700;
+    border-radius: 999px;
+  }
+
+  details {
+    margin-top: 24px;
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    background: var(--bg-card);
+    box-shadow: 0 1px 2px rgba(10,37,64,.04);
+  }
+  details summary {
+    cursor: pointer;
+    padding: 16px 20px;
+    font-size: 14px; font-weight: 600;
+    color: var(--text-muted);
+    list-style: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before {
+    content: '▸';
+    transition: transform 200ms;
+    color: var(--text-dim);
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+  details summary span.tag {
+    margin-left: auto;
+    padding: 2px 8px;
+    background: rgba(220,38,38,.08);
+    color: var(--red);
+    font-size: 10px; font-weight: 600;
+    border-radius: 999px;
+  }
+  .grid {
+    padding: 0 20px 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .old {
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+    display: flex; flex-direction: column; gap: 4px;
+    transition: all 150ms ease;
+    background: var(--bg);
+  }
+  .old:hover {
+    border-color: var(--hairline-strong);
+    transform: translateY(-1px);
+  }
+  .old .n {
+    font-size: 10px; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em;
+  }
+  .old .name { font-weight: 600; color: var(--text-strong); }
+  .old .desc { font-size: 11px; color: var(--text-muted); }
+
+  .help {
+    margin-top: 32px;
+    padding: 20px 24px;
+    background: var(--accent-tint);
+    border-radius: 14px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .help b { color: var(--accent); }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: white;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--hairline);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kicker">DESIGN PREVIEW · v0.2</span>
+  <h1>iptables-dashboard <span class="accent">设计预览</span></h1>
+  <p class="lede">基于 Stripe 暖亮 · 贵气方向重做。点开下面的卡片全屏预览。如果觉得是这条路，告诉我，我会把整个前端按它的语言重写。</p>
+
+  <a class="hero" href="06-warm-light-stripe.html">
+    <div>
+      <span class="badge">当前方向</span>
+      <h2>06 · Warm Light · Stripe-style</h2>
+      <p>暖白底 (#FCFBF7) + 紫蓝幻彩 accent + Plus Jakarta Sans + Fraunces 衬线斜体重音 + 柔和分层阴影 + 节制的微动效。Linear / Stripe / OpenAI Platform 同款产品质感。</p>
+      <div class="tags">
+        <span class="tag">Plus Jakarta Sans</span>
+        <span class="tag">Fraunces italic</span>
+        <span class="tag">JetBrains Mono · 数据</span>
+        <span class="tag">紫蓝幻彩</span>
+        <span class="tag">14-20px 圆角</span>
+        <span class="tag">软阴影分层</span>
+      </div>
+    </div>
+    <div class="preview">
+      <div class="preview-stat">
+        <div><div class="l">v4</div><div class="v">23</div></div>
+        <div><div class="l">不同步</div><div class="v r">5</div></div>
+      </div>
+      <div class="preview-rule">
+        <span class="v">-p</span> tcp <span class="v">--dport</span> 22
+        <span class="pill">ACCEPT</span>
+      </div>
+      <div class="preview-rule" style="margin-top:6px">
+        <span class="v">-i</span> lo
+        <span class="pill">ACCEPT</span>
+      </div>
+    </div>
+  </a>
+
+  <details>
+    <summary>之前的 5 套尝试（你说太工业化了）<span class="tag">已废弃</span></summary>
+    <div class="grid">
+      <a class="old" href="01-terminal-console.html">
+        <span class="n">01</span>
+        <span class="name">Terminal Console</span>
+        <span class="desc">黑底琥珀 / 扫描线 / 太硬</span>
+      </a>
+      <a class="old" href="02-brutalist-sysadmin.html">
+        <span class="n">02</span>
+        <span class="name">Brutalist Newsprint</span>
+        <span class="desc">巨型字 / 厚黑边 / 太凶</span>
+      </a>
+      <a class="old" href="03-refined-editorial.html">
+        <span class="n">03</span>
+        <span class="name">Refined Editorial</span>
+        <span class="desc">深蓝衬线 / 偏枯燥</span>
+      </a>
+      <a class="old" href="04-hud-scifi-fui.html">
+        <span class="n">04</span>
+        <span class="name">HUD / Sci-Fi FUI</span>
+        <span class="desc">青色辉光 / 太赛博朋克</span>
+      </a>
+      <a class="old" href="05-swiss-modernism.html">
+        <span class="n">05</span>
+        <span class="name">Swiss Modernism</span>
+        <span class="desc">168px 巨字 / 纯黑白 / 太极端</span>
+      </a>
+    </div>
+  </details>
+
+  <div class="help">
+    <b>下一步：</b> 双击 <code>06-warm-light-stripe.html</code> 看全屏。觉得这是对的方向就说"OK 06"，
+    我会照着它重做整个前端 9 页 + 6 个核心组件。如果还差点意思，告诉我哪里不对（比如：
+    「字再小点」「accent 太紫」「再贵气一些」「换成 Linear 那种深色」），我会再迭代。
+  </div>
+</div>
+</body>
+</html>

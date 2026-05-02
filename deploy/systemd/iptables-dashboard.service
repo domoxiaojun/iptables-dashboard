@@ -1,0 +1,42 @@
+[Unit]
+Description=iptables-dashboard
+Documentation=https://github.com/domoxiaojun/iptables-dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=iptables-dashboard
+Group=iptables-dashboard
+ExecStart=/usr/local/bin/iptables-dashboard
+Environment="IPTD_CONFIG_PATH=/etc/iptables-dashboard/config.toml"
+Environment="IPTD_DATA_DIR=/var/lib/iptables-dashboard"
+
+# Capabilities — only grant what we actually need.
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+
+StateDirectory=iptables-dashboard
+ConfigurationDirectory=iptables-dashboard
+LogsDirectory=iptables-dashboard
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,38 @@
+# Rust
+/target
+/crates/*/target
+**/*.rs.bk
+Cargo.lock.bak
+
+# Frontend
+/frontend/node_modules
+/frontend/dist
+/frontend/.vite
+/frontend/coverage
+*.tsbuildinfo
+.eslintcache
+
+# Editor
+.vscode
+.idea
+.claude
+*.swp
+*.swo
+
+# Local data
+/data
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# sqlx offline metadata (committed in real projects, but generated locally first)
+# /.sqlx

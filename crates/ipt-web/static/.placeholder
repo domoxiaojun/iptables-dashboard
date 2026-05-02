@@ -1,0 +1,6 @@
+# Frontend bundle placeholder.
+#
+# This file ensures `crates/ipt-web/static/` exists at compile time so
+# rust-embed-for-web can derive an asset struct in dev builds where the
+# frontend hasn't been built yet. In release Docker builds the directory is
+# replaced with the actual `frontend/dist` output.

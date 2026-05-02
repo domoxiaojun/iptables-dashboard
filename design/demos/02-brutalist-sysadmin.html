@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>02 — Brutalist Sysadmin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,900&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F4F2EE;       /* warm off-white */
+    --ink: #0A0A0A;          /* near-black ink */
+    --ink-soft: #2A2724;
+    --ink-mid: #6B6862;
+    --ink-faint: #B5B0A6;
+    --hot: #FF1744;          /* singular hot accent */
+    --green: #0F8B5C;        /* only used for ACCEPT/success */
+    --paper-warm: #ECE7DD;
+    --paper-shadow: #DDD7CB;
+    --display: 'Bricolage Grotesque', sans-serif;
+    --mono: 'Geist Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  /* Newsprint texture — subtle paper grain */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(0,0,0,.015) 0, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(0,0,0,.012) 0, transparent 50%);
+    background-size: 4px 4px, 6px 6px;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: multiply;
+  }
+  .container { position: relative; z-index: 2; padding: 32px 48px 48px; }
+
+  /* Top — overprinted poster */
+  .masthead {
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: end;
+    border-bottom: 4px solid var(--ink);
+    padding-bottom: 12px;
+    margin-bottom: 28px;
+  }
+  .brand {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .brand sup {
+    font-family: var(--mono);
+    font-size: 9px; font-weight: 400;
+    color: var(--hot);
+    letter-spacing: 0.1em;
+    margin-left: 4px;
+    vertical-align: super;
+  }
+  .meta {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-mid);
+    text-transform: uppercase; letter-spacing: 0.2em;
+  }
+  .stamp {
+    border: 2px solid var(--hot);
+    color: var(--hot);
+    padding: 4px 10px;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    transform: rotate(-2deg);
+  }
+
+  /* Headline block — magazine-style enormous type */
+  .head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: end;
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 88px;
+    letter-spacing: -0.04em;
+    line-height: 0.85;
+    color: var(--ink);
+  }
+  h1 .slash { color: var(--hot); }
+  .lede {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    max-width: 360px;
+    text-align: right;
+  }
+
+  /* Counters strip — like newspaper data */
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 28px;
+  }
+  .strip > div {
+    padding: 12px 18px;
+    border-right: 1px solid var(--ink);
+  }
+  .strip > div:last-child { border-right: 0; }
+  .strip .lbl {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-mid);
+  }
+  .strip .num {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 48px;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-top: 4px;
+  }
+  .strip .num.hot { color: var(--hot); }
+  .strip .num.green { color: var(--green); }
+
+  /* Layout: nav-tabs as bold horizontal labels */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 4px solid var(--ink);
+    margin-bottom: 0;
+  }
+  .tabs a {
+    padding: 14px 22px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-decoration: none;
+    border-right: 1px solid var(--ink);
+    text-transform: uppercase;
+  }
+  .tabs a.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .tabs a.danger {
+    color: var(--hot);
+  }
+  .tabs .spacer { flex: 1; border-right: 0; }
+  .tabs button.apply {
+    background: var(--hot);
+    color: var(--paper);
+    border: 0;
+    padding: 14px 30px;
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    text-transform: uppercase;
+    border-left: 4px solid var(--ink);
+    transition: transform 100ms ease-out;
+  }
+  .tabs button.apply:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+
+  /* Sub-toggle row */
+  .controls {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper-warm);
+  }
+  .controls .seg { display: flex; gap: 0; border-right: 1px solid var(--ink); }
+  .controls .seg button {
+    padding: 10px 18px;
+    background: transparent; border: 0; cursor: pointer;
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--ink-mid);
+  }
+  .controls .seg button.on {
+    background: var(--ink); color: var(--paper);
+    font-weight: 700;
+  }
+  .controls input {
+    flex: 1; min-width: 0;
+    padding: 10px 18px;
+    border: 0; outline: 0;
+    background: transparent;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--ink);
+  }
+  .controls input::placeholder { color: var(--ink-faint); }
+
+  /* Table — looks like a printed inventory ledger */
+  table {
+    width: 100%; border-collapse: collapse;
+    background: var(--paper);
+  }
+  th {
+    text-align: left;
+    padding: 10px 18px;
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--ink-mid);
+    border-bottom: 2px solid var(--ink);
+    background: var(--paper-warm);
+  }
+  td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--ink-faint);
+    font-family: var(--mono); font-size: 13px;
+    color: var(--ink);
+    vertical-align: middle;
+  }
+  tbody tr { transition: background 100ms; }
+  tbody tr:hover { background: var(--paper-warm); }
+  tbody tr:hover td:first-child { box-shadow: -4px 0 0 var(--hot); }
+  td .seq { font-weight: 700; color: var(--ink-mid); width: 24px; display: inline-block; }
+  td .v { color: var(--ink-mid); }
+  td .accept { color: var(--green); font-weight: 700; }
+  td .drop { color: var(--hot); font-weight: 700; text-decoration: line-through; text-decoration-color: var(--hot); }
+  td .hits { font-feature-settings: 'tnum'; color: var(--ink-mid); }
+
+  /* Staged — like stamped instructions on a shipping manifest */
+  .manifest {
+    margin-top: 32px;
+    border: 4px solid var(--ink);
+    padding: 24px 28px;
+    position: relative;
+  }
+  .manifest::before {
+    content: 'STAGED · NOT YET COMMITTED';
+    position: absolute; top: -12px; left: 18px;
+    background: var(--paper);
+    padding: 0 8px;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--ink);
+  }
+  .manifest h3 {
+    font-family: var(--display);
+    font-weight: 900; font-size: 32px;
+    letter-spacing: -0.03em;
+    margin-bottom: 14px;
+    line-height: 0.95;
+  }
+  .manifest h3 .n { color: var(--hot); }
+  .manifest ol {
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid var(--ink);
+  }
+  .manifest li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--ink);
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .manifest .op {
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 11px;
+  }
+  .manifest .op.add { color: var(--green); }
+  .manifest .op.mod { color: var(--ink); }
+  .manifest .op.del { color: var(--hot); }
+  .manifest .x {
+    background: transparent; border: 1px solid var(--ink); padding: 4px 10px;
+    font-family: var(--mono); font-size: 10px; cursor: pointer;
+  }
+  .manifest .x:hover { background: var(--ink); color: var(--paper); }
+
+  /* Footer */
+  .colophon {
+    margin-top: 48px; padding-top: 18px;
+    border-top: 1px solid var(--ink);
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mid);
+    text-transform: uppercase; letter-spacing: 0.18em;
+    display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="masthead">
+    <div class="brand">IPTABLES<sup>v0.1.0</sup></div>
+    <div class="meta">VOL.1 · NO.7 · MAY 02, 2026 · OPERATOR CONSOLE</div>
+    <div class="stamp">DRIFT · 5</div>
+  </header>
+
+  <div class="head">
+    <h1>RULE<span class="slash">/</span>SET<br>FILTER.</h1>
+    <p class="lede">Live read of kernel netfilter, IPv4 chain INPUT.<br>Polled every 2s · Last sync 04:11:23 UTC</p>
+  </div>
+
+  <div class="strip">
+    <div><div class="lbl">v4 RULES</div><div class="num">23</div></div>
+    <div><div class="lbl">v6 RULES</div><div class="num">21</div></div>
+    <div><div class="lbl">DRIFT</div><div class="num hot">5</div></div>
+    <div><div class="lbl">SSE</div><div class="num green">LIVE</div></div>
+  </div>
+
+  <nav class="tabs">
+    <a>DASHBOARD</a>
+    <a class="active">RULES</a>
+    <a>DIFF</a>
+    <a>SNAPSHOTS</a>
+    <a>TEMPLATES</a>
+    <a>LOGS</a>
+    <a class="danger">AUDIT</a>
+    <span class="spacer"></span>
+    <button class="apply">APPLY ⚡ 3</button>
+  </nav>
+
+  <div class="controls">
+    <div class="seg">
+      <button class="on">v4</button>
+      <button>v6</button>
+      <button>BOTH</button>
+    </div>
+    <div class="seg">
+      <button class="on">filter</button>
+      <button>nat</button>
+      <button>mangle</button>
+      <button>raw</button>
+    </div>
+    <input placeholder="GREP RULES…" />
+    <div class="seg" style="border-right:0">
+      <button>+ NEW</button>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:48px">№</th>
+        <th>RULE</th>
+        <th style="width:160px">HITS</th>
+        <th style="width:90px">ACT</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="seq">01</span></td>
+        <td><span class="v">-i</span> lo <span class="v">-j</span> <span class="accept">ACCEPT</span></td>
+        <td class="hits">42 · 3.3 KB</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="seq">02</span></td>
+        <td><span class="v">-m</span> conntrack <span class="v">--ctstate</span> ESTABLISHED,RELATED <span class="v">-j</span> <span class="accept">ACCEPT</span></td>
+        <td class="hits">112,394 · 14.7 MB</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="seq">03</span></td>
+        <td><span class="v">-p</span> tcp <span class="v">--dport</span> 22 <span class="v">-j</span> <span class="accept">ACCEPT</span></td>
+        <td class="hits">12,341 · 982 KB</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="seq">04</span></td>
+        <td><span class="v">-p</span> tcp <span class="v">--dport</span> 443 <span class="v">-j</span> <span class="accept">ACCEPT</span></td>
+        <td class="hits">88,420 · 6.2 MB</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><span class="seq">05</span></td>
+        <td><span class="v">-j</span> <span class="drop">DROP</span></td>
+        <td class="hits">8,491 · 421 KB</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <section class="manifest">
+    <h3>STAGED MUTATIONS — <span class="n">3</span></h3>
+    <ol>
+      <li>
+        <span class="op add">[+]</span>
+        <span>filter/INPUT <strong>-p</strong> udp <strong>--dport</strong> 53 <strong>-j</strong> ACCEPT &nbsp; <span style="color:var(--ink-mid)">(also IPv6)</span></span>
+        <button class="x">DISCARD</button>
+      </li>
+      <li>
+        <span class="op mod">[~]</span>
+        <span>filter/INPUT#3 <strong>--dport</strong> 22 → <strong>22,2222</strong></span>
+        <button class="x">DISCARD</button>
+      </li>
+      <li>
+        <span class="op del">[-]</span>
+        <span>filter/INPUT#5 (default DROP)</span>
+        <button class="x">DISCARD</button>
+      </li>
+    </ol>
+  </section>
+
+  <footer class="colophon">
+    <span>SET IN BRICOLAGE GROTESQUE / GEIST MONO</span>
+    <span>BUILD 0a4f8c — UPRIGHT, BLOCK SHADOW, KERNEL-WRITE READY</span>
+  </footer>
+</div>
+</body>
+</html>

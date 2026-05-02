@@ -1,0 +1,14 @@
+# Build context exclusions
+.git
+.github
+.vscode
+.idea
+docs
+**/node_modules
+**/dist
+**/target
+**/.sqlx
+**/data
+*.sqlite*
+*.log
+.env*

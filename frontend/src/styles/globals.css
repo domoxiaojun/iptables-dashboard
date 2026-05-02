@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap');
+
+@import './design-tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+ * Base
+ * ============================================================================ */
+
+@layer base {
+  :root {
+    /* shadcn-compatible HSL aliases for Tailwind utilities */
+    --background: 42 33% 98%;          /* #FCFBF7 */
+    --foreground: 213 71% 15%;         /* #0A2540 */
+    --card: 0 0% 100%;
+    --card-foreground: 213 71% 15%;
+    --primary: 245 100% 68%;           /* #635BFF */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 25% 95%;
+    --secondary-foreground: 213 71% 15%;
+    --muted: 40 25% 95%;
+    --muted-foreground: 213 13% 42%;
+    --accent: 245 100% 68%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 73% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 71% 15% / 0.06;
+    --input: 213 71% 15% / 0.14;
+    --ring: 245 100% 68%;
+    --radius: 10px;
+  }
+
+  * {
+    border-color: var(--c-hairline);
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    font-feature-settings: 'cv11', 'ss03';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* Tabular numerals on data grids */
+  table, .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: var(--c-accent-tint-strong);
+    color: var(--c-text-strong);
+  }
+}
+
+/* ============================================================================
+ * Component utilities
+ * ============================================================================ */
+
+@layer components {
+  .font-sans { font-family: var(--font-sans); }
+  .font-mono { font-family: var(--font-mono); }
+  .font-serif-italic {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  /* Iridescent text — for hero accents */
+  .text-grad {
+    background: var(--grad-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Status pill (drop-in for the table) */
+  .pill-dot {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    font-size: var(--fs-2xs); font-weight: 600;
+    line-height: 1.4;
+  }
+  .pill-dot::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .pill-dot.is-accept { background: var(--c-success-tint); color: var(--c-success); }
+  .pill-dot.is-drop   { background: var(--c-danger-tint);  color: var(--c-danger);  }
+  .pill-dot.is-log    { background: var(--c-warn-tint);    color: var(--c-warn);    }
+  .pill-dot.is-info   { background: var(--c-info-tint);    color: var(--c-info);    }
+
+  /* Surface card — drop-in with soft shadow */
+  .surface {
+    background: var(--c-bg-card);
+    border: 1px solid var(--c-hairline);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-2);
+  }
+  .surface-soft {
+    background: var(--c-bg-soft);
+    border: 1px solid var(--c-hairline);
+    border-radius: var(--r-lg);
+  }
+}
+
+/* ============================================================================
+ * Background atmosphere — two soft radials, opposite corners
+ * ============================================================================ */
+
+@layer utilities {
+  .bg-aurora-warm {
+    position: relative;
+  }
+  .bg-aurora-warm::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(99,91,255,.14) 0%, transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-aurora-warm::after {
+    content: '';
+    position: fixed;
+    bottom: -300px; right: -200px;
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(45,212,191,.10) 0%, transparent 70%);
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Pulse for the live SSE dot */
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 var(--c-success-tint-strong); }
+    50%      { box-shadow: 0 0 0 6px transparent; }
+  }
+  .pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
+
+  /* Stagger fade-in (used on hero cards / stat tiles) */
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .rise-in { animation: rise-in 400ms var(--ease-out) both; }
+
+  /* Digit pop for the countdown */
+  @keyframes digit-pop {
+    0%   { transform: scale(1.10); opacity: .6; }
+    60%  { transform: scale(0.97); }
+    100% { transform: scale(1);    opacity: 1;  }
+  }
+  .digit-pop { animation: digit-pop 350ms var(--ease-spring); }
+
+  /* Scrollbars */
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--c-hairline-strong);
+    border-radius: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--c-text-dim);
+  }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+}

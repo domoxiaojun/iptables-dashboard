@@ -1,0 +1,50 @@
+# iptables-dashboard configuration
+# Paths can be overridden via IPTD_* environment variables; env > file > defaults.
+
+[server]
+listen = "0.0.0.0:7642"
+# Direct TLS is intentionally not supported. Run a reverse proxy (Caddy /
+# Traefik / nginx) in front for HTTPS termination. For public deployments
+# bind `listen` to `127.0.0.1:7642` so the panel is reachable only via the
+# proxy.
+
+[paths]
+data_dir = "/var/lib/iptables-dashboard"
+
+[security]
+# Two-step activation grace period (seconds). When the user does not confirm
+# within this window, the previous snapshot is restored automatically.
+two_step_seconds = 30
+# After N failed login attempts from the same IP, the IP is blocked for `lockout_seconds`.
+max_login_attempts = 5
+lockout_seconds = 900
+# IP allow-list for the entire HTTP surface. Each entry is an exact IP or
+# CIDR. Empty (the default) = open to anyone who can reach the listen
+# socket. Loopback access to `/api/v1/health` is always allowed regardless,
+# so Docker HEALTHCHECK keeps working.
+# allowed_ips = ["10.0.0.0/8", "192.168.1.5", "2001:db8::/32"]
+allowed_ips = []
+# Source IPs / CIDRs whose `X-Forwarded-For` header is honored when
+# resolving the real client IP. Set to your reverse-proxy address(es).
+# trusted_proxies = ["127.0.0.1", "172.17.0.0/16"]
+trusted_proxies = []
+
+[logging]
+level = "info"           # trace, debug, info, warn, error
+format = "compact"       # compact | json
+
+[bootstrap]
+# Initial admin username when the user table is empty. The password is NOT
+# stored here in plaintext — on first run, when no IPTD_BOOTSTRAP_PASSWORD
+# env var is set, the server generates a random 32-character password and
+# writes it to ${IPTD_DATA_DIR}/initial-admin-password.txt (mode 0600). The
+# user must change it on first login before any write operations are
+# allowed (must_change_password flag).
+username = "admin"
+
+[cors]
+# Origins permitted to send credentialed cross-site requests. Empty (the
+# default) is same-origin only — the safest mode when behind a reverse
+# proxy. Add explicit origins like "https://panel.example.com" if you
+# truly need cross-site access.
+allowed_origins = []

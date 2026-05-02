@@ -1,0 +1,57 @@
+name: refresh-locks
+
+# Manually-triggered workflow that regenerates Cargo.lock and
+# frontend/pnpm-lock.yaml on a fresh ubuntu runner and opens a PR with the
+# results. Use this whenever dependencies change (or for the first-time
+# bootstrap of the lockfiles, since neither file is checked into the repo
+# yet). After the PR merges, ci.yml / release.yml / Dockerfile can be
+# tightened to --frozen-lockfile for reproducible builds.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---- Cargo.lock ----
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.83'
+      - name: Generate Cargo.lock
+        run: cargo generate-lockfile
+
+      # ---- frontend/pnpm-lock.yaml ----
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.15.2 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Generate pnpm-lock.yaml
+        working-directory: frontend
+        run: pnpm install --lockfile-only
+
+      - name: Open PR with refreshed lockfiles
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore: refresh Cargo.lock and pnpm-lock.yaml'
+          branch: chore/refresh-locks
+          delete-branch: true
+          title: 'chore: refresh lockfiles'
+          body: |
+            Auto-generated from the `refresh-locks` workflow.
+
+            - `Cargo.lock` regenerated via `cargo generate-lockfile`
+            - `frontend/pnpm-lock.yaml` regenerated via `pnpm install --lockfile-only`
+
+            After merging this PR, switch CI / Docker back to
+            `--frozen-lockfile` for reproducible builds.
+          add-paths: |
+            Cargo.lock
+            frontend/pnpm-lock.yaml

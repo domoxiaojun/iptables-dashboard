@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>03 — Refined Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --cream-deep: #F1ECE3;
+    --navy: #14283C;
+    --navy-soft: #36495C;
+    --rule: #D5CDBE;
+    --rule-strong: #8C8273;
+    --teal: #1E6B6B;     /* status / accent */
+    --teal-soft: #5A9999;
+    --burgundy: #8C2330;  /* dangers, sparingly */
+    --gold: #B58A3E;      /* secondary accent */
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Manrope', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--cream);
+    color: var(--navy);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar — magazine TOC style */
+  .toc {
+    background: var(--cream-deep);
+    border-right: 1px solid var(--rule);
+    padding: 36px 28px;
+    display: flex; flex-direction: column;
+  }
+  .masthead {
+    font-family: var(--serif);
+    font-weight: 800;
+    font-size: 22px;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .masthead em {
+    font-style: italic;
+    color: var(--gold);
+    font-weight: 400;
+  }
+  .vol {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--rule-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 36px;
+  }
+  .toc nav { display: flex; flex-direction: column; gap: 2px; }
+  .toc a {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    align-items: baseline;
+    padding: 10px 0;
+    color: var(--navy-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+    transition: all 200ms ease-out;
+  }
+  .toc a .n {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--rule-strong);
+    letter-spacing: 0.18em;
+  }
+  .toc a .label {
+    font-family: var(--serif);
+    font-size: 16px;
+    letter-spacing: -0.005em;
+  }
+  .toc a .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--gold);
+  }
+  .toc a:hover { color: var(--navy); }
+  .toc a.active .label { font-weight: 600; color: var(--burgundy); font-style: italic; }
+  .toc a.active .n { color: var(--burgundy); }
+
+  .toc-foot {
+    margin-top: auto;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--navy-soft);
+  }
+
+  /* Main */
+  main {
+    padding: 48px 64px 64px;
+    max-width: 1100px;
+  }
+
+  /* Article header */
+  .article-head {
+    border-bottom: 2px solid var(--navy);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--burgundy);
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: 64px;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    margin-bottom: 18px;
+  }
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--burgundy);
+  }
+  .standfirst {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--navy-soft);
+    max-width: 620px;
+    font-weight: 300;
+  }
+  .byline {
+    margin-top: 22px;
+    display: flex;
+    gap: 28px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--rule-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  .byline .live::before {
+    content: '●';
+    color: var(--teal);
+    margin-right: 6px;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: .35; }
+  }
+
+  /* Stats — like an FT data box */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 36px;
+  }
+  .stat { background: var(--cream); padding: 18px 22px; }
+  .stat .lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--rule-strong);
+  }
+  .stat .v {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 38px;
+    line-height: 1;
+    margin-top: 6px;
+  }
+  .stat .v.alert { color: var(--burgundy); font-style: italic; }
+  .stat .delta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--teal);
+    margin-top: 4px;
+  }
+
+  /* Section divider */
+  .section-rule {
+    text-align: center;
+    margin: 24px 0;
+    color: var(--rule-strong);
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4em;
+  }
+  .section-rule::before, .section-rule::after {
+    content: '— —';
+    margin: 0 14px;
+    color: var(--rule);
+  }
+
+  /* Toolbar */
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 6px;
+  }
+  .breadcrumb {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: -0.005em;
+  }
+  .breadcrumb b { font-style: italic; color: var(--burgundy); font-weight: 400; }
+  .breadcrumb .sep { color: var(--rule-strong); margin: 0 8px; font-size: 14px; }
+  .meta-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--rule-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    border-left: 1px solid var(--rule);
+    padding-left: 16px;
+    margin-left: 8px;
+  }
+  .pill-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 3px;
+    background: var(--cream-deep);
+  }
+  .pill-toggle button {
+    height: 26px; padding: 0 14px;
+    background: transparent; border: 0;
+    border-radius: 999px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--navy-soft);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: all 200ms ease-out;
+  }
+  .pill-toggle button.on {
+    background: var(--navy); color: var(--cream);
+  }
+
+  /* Table — elegant data grid */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    text-align: left;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--rule-strong);
+    border-bottom: 1px solid var(--rule);
+  }
+  th:first-child { padding-left: 0; }
+  th:last-child { text-align: right; padding-right: 0; }
+  td {
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 14px;
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  td:first-child { padding-left: 0; }
+  td:last-child { text-align: right; padding-right: 0; }
+  td .seq {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--rule-strong);
+    line-height: 1;
+  }
+  td .raw {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--navy);
+  }
+  td .raw .v { color: var(--rule-strong); font-style: normal; }
+  td .raw em { font-style: normal; }
+  td .accept {
+    color: var(--teal);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    font-weight: 400;
+  }
+  td .drop {
+    color: var(--burgundy);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    font-weight: 400;
+  }
+  td .note {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--rule-strong);
+    margin-top: 4px;
+    display: block;
+  }
+  td .hits {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--navy-soft);
+    font-feature-settings: 'tnum';
+  }
+  td .hits b {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--navy);
+    display: block;
+    margin-bottom: 2px;
+  }
+  tbody tr { transition: background 250ms ease-out; }
+  tbody tr:hover { background: rgba(28,107,107,.04); }
+  tbody tr:hover td:first-child { box-shadow: -3px 0 0 var(--teal); }
+
+  /* Pull-quote / staged box */
+  .pull {
+    margin: 36px 0 0;
+    padding: 28px 36px 32px;
+    background: var(--cream-deep);
+    border-left: 4px solid var(--gold);
+    position: relative;
+  }
+  .pull-eyebrow {
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .pull h2 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: 28px;
+    line-height: 1.18;
+    letter-spacing: -0.015em;
+    margin-bottom: 18px;
+  }
+  .pull h2 em { font-style: italic; color: var(--burgundy); }
+  .pull-list {
+    list-style: none;
+    border-top: 1px solid var(--rule);
+    padding-top: 8px;
+  }
+  .pull-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .pull-list .op {
+    font-family: var(--serif); font-style: italic;
+    font-size: 16px; font-weight: 400;
+  }
+  .pull-list .op.add { color: var(--teal); }
+  .pull-list .op.del { color: var(--burgundy); }
+  .pull-list .op.mod { color: var(--gold); }
+  .pull-list .x {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--rule-strong);
+    background: transparent; border: 0;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    cursor: pointer; padding: 4px 8px;
+  }
+  .pull-list .x:hover { color: var(--burgundy); }
+
+  .commit-row {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+  }
+  .btn-ghost {
+    padding: 12px 22px;
+    background: transparent;
+    border: 1px solid var(--navy);
+    color: var(--navy);
+    font-family: var(--serif); font-style: italic;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 200ms ease-out;
+  }
+  .btn-ghost:hover { background: var(--navy); color: var(--cream); }
+  .btn-primary {
+    padding: 12px 32px;
+    background: var(--navy);
+    border: 1px solid var(--navy);
+    color: var(--cream);
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 200ms ease-out;
+  }
+  .btn-primary em { font-style: italic; color: var(--gold); margin-left: 6px; }
+  .btn-primary:hover { background: var(--burgundy); border-color: var(--burgundy); }
+
+  /* Colophon */
+  .colophon {
+    margin-top: 64px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--rule-strong);
+    max-width: 620px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="toc">
+    <div class="masthead">iptables<br/><em>Dashboard</em></div>
+    <div class="vol">VOL.II · ISSUE 7 · MAY 2026</div>
+    <nav>
+      <a><span class="n">001</span><span class="label">Overview</span><span class="badge"></span></a>
+      <a class="active"><span class="n">002</span><span class="label">Rules</span><span class="badge">42</span></a>
+      <a><span class="n">003</span><span class="label">Diff</span><span class="badge">⚠ 5</span></a>
+      <a><span class="n">004</span><span class="label">Snapshots</span><span class="badge">12</span></a>
+      <a><span class="n">005</span><span class="label">Templates</span><span class="badge">8</span></a>
+      <a><span class="n">006</span><span class="label">Logs</span><span class="badge">●</span></a>
+      <a><span class="n">007</span><span class="label">Audit</span><span class="badge"></span></a>
+      <a><span class="n">008</span><span class="label">Settings</span><span class="badge"></span></a>
+    </nav>
+    <div class="toc-foot">
+      &ldquo;A firewall is the politest way one machine has of saying <em>no</em> to another.&rdquo;
+    </div>
+  </aside>
+
+  <main>
+    <div class="article-head">
+      <div class="kicker">FILTER · INPUT · IPv4 · LIVE</div>
+      <h1>The five rules<br>that keep <em>port 22</em> alive.</h1>
+      <p class="standfirst">A study of the present kernel state — accepts, drops, and the
+        handful of staged mutations awaiting two-step activation. Polled every two
+        seconds; readers may safely skip to the manifest.</p>
+      <div class="byline">
+        <span class="live">LIVE · POLLED 04:11:23 UTC</span>
+        <span>BUILD 0a4f8c</span>
+        <span>BY THE OPERATOR</span>
+      </div>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <div class="lbl">v4 rules</div>
+        <div class="v">23</div>
+        <div class="delta">+2 this hour</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">v6 rules</div>
+        <div class="v">21</div>
+        <div class="delta">±0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Drift</div>
+        <div class="v alert">5</div>
+        <div class="delta" style="color:var(--burgundy)">paired diff</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">SSE</div>
+        <div class="v">live</div>
+        <div class="delta">2s cadence</div>
+      </div>
+    </section>
+
+    <div class="section-rule">II. THE RULES</div>
+
+    <div class="tools">
+      <div class="breadcrumb">
+        <b>filter</b><span class="sep">·</span><b>INPUT</b>
+      </div>
+      <span class="meta-tag">7 entries · default <em>ACCEPT</em></span>
+      <div class="pill-toggle">
+        <button class="on">v4</button>
+        <button>v6</button>
+        <button>both</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px">№</th>
+          <th>Rule</th>
+          <th style="width:180px; text-align:right">Hits / Bytes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="seq">i.</span></td>
+          <td>
+            <div class="raw"><span class="v">-i</span> lo <span class="v">-j</span> <span class="accept">accept</span></div>
+            <span class="note">Loopback — every administrator's first rule.</span>
+          </td>
+          <td><div class="hits"><b>42</b>3.3 KB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">ii.</span></td>
+          <td>
+            <div class="raw"><span class="v">-m</span> conntrack <span class="v">--ctstate</span> ESTABLISHED,RELATED <span class="v">-j</span> <span class="accept">accept</span></div>
+            <span class="note">The workhorse — keeps return traffic from reaching the bottom.</span>
+          </td>
+          <td><div class="hits"><b>112,394</b>14.7 MB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">iii.</span></td>
+          <td>
+            <div class="raw"><span class="v">-p</span> tcp <span class="v">--dport</span> 22 <span class="v">-j</span> <span class="accept">accept</span></div>
+            <span class="note">SSH; the bridge between the operator and the host.</span>
+          </td>
+          <td><div class="hits"><b>12,341</b>982 KB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">iv.</span></td>
+          <td>
+            <div class="raw"><span class="v">-p</span> tcp <span class="v">--dport</span> 443 <span class="v">-j</span> <span class="accept">accept</span></div>
+            <span class="note">HTTPS — for the dashboard you are reading.</span>
+          </td>
+          <td><div class="hits"><b>88,420</b>6.2 MB</div></td>
+        </tr>
+        <tr>
+          <td><span class="seq">v.</span></td>
+          <td>
+            <div class="raw"><span class="v">-j</span> <span class="drop">drop</span></div>
+            <span class="note">Catch-all. Everything that has not yet justified itself.</span>
+          </td>
+          <td><div class="hits"><b>8,491</b>421 KB</div></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <aside class="pull">
+      <div class="pull-eyebrow">III. THE MANIFEST</div>
+      <h2>Three changes <em>await</em> your signature.<br>None has yet touched the kernel.</h2>
+      <ul class="pull-list">
+        <li>
+          <span class="op add">add</span>
+          <span><b>filter/INPUT</b> · -p udp --dport 53 -j ACCEPT &nbsp;<em style="color:var(--rule-strong)">(also IPv6)</em></span>
+          <button class="x">discard</button>
+        </li>
+        <li>
+          <span class="op mod">mod</span>
+          <span><b>filter/INPUT#3</b> · --dport 22 → 22,2222</span>
+          <button class="x">discard</button>
+        </li>
+        <li>
+          <span class="op del">del</span>
+          <span><b>filter/INPUT#5</b> · default DROP</span>
+          <button class="x">discard</button>
+        </li>
+      </ul>
+      <div class="commit-row">
+        <button class="btn-ghost">Discard all</button>
+        <button class="btn-primary">Apply <em>3 changes</em></button>
+      </div>
+    </aside>
+
+    <p class="colophon">
+      Set in <em>Fraunces</em> (display) and <em>Manrope</em> (text), with <em>JetBrains Mono</em>
+      for kernel data. Composed at 04:11 UTC. Two-step activation provides a thirty-second
+      grace period during which any of the above changes may be silently rolled back —
+      should the operator have second thoughts, or no thoughts at all.
+    </p>
+  </main>
+</div>
+</body>
+</html>

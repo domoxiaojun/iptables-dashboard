@@ -1,0 +1,36 @@
+services:
+  iptables-dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: iptables-dashboard-dev
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ../:/workspace
+      - cargo-cache:/root/.cargo/registry
+      - target-cache:/workspace/target
+    working_dir: /workspace
+    environment:
+      IPTD_LISTEN: 0.0.0.0:7642
+      RUST_LOG: debug
+    command: ["cargo", "run", "--bin", "iptables-dashboard"]
+
+  frontend:
+    image: node:20-alpine
+    container_name: iptables-dashboard-frontend-dev
+    # network_mode: host so Vite's /api proxy can reach the backend on
+    # 127.0.0.1:7642 (the backend service binds to the host's loopback).
+    network_mode: host
+    working_dir: /app
+    volumes:
+      - ../frontend:/app
+      - node-cache:/app/node_modules
+    command: sh -c "corepack enable && pnpm install --no-frozen-lockfile && pnpm dev --host 0.0.0.0"
+
+volumes:
+  cargo-cache:
+  target-cache:
+  node-cache:

@@ -1,0 +1,29 @@
+services:
+  iptables-dashboard:
+    image: ghcr.io/domoxiaojun/iptables-dashboard:latest
+    # The published image is built by GitHub Actions: a per-arch musl binary
+    # is compiled with cargo-zigbuild, then the runtime Dockerfile only does
+    # a COPY. Local source builds are not done through this Dockerfile —
+    # use `docker compose -f docker/docker-compose.dev.yml up` for HMR dev,
+    # or build once with cargo-zigbuild and `docker build` with
+    # `--build-arg IPTD_BINARY=<path>` if you need a single local image.
+    container_name: iptables-dashboard
+    # network_mode: host is required because the container needs to manipulate
+    # the host's netfilter tables, which live in the host network namespace.
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ipt-data:/var/lib/iptables-dashboard
+      - ipt-config:/etc/iptables-dashboard
+    environment:
+      IPTD_LISTEN: 127.0.0.1:7642        # bind loopback only; reverse-proxy in front
+      RUST_LOG: info
+      # IPTD_BOOTSTRAP_USERNAME: admin
+      # IPTD_BOOTSTRAP_PASSWORD: change-me-on-first-login
+    restart: unless-stopped
+
+volumes:
+  ipt-data:
+  ipt-config:
