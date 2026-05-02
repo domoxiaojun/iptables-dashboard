@@ -1,28 +1,14 @@
-# Default: treat as text, normalize to LF on checkin and checkout.
+# Project does not target Windows. All text files use LF on disk and in
+# the repo — no per-extension carve-outs.
 * text=auto eol=lf
 
-# Windows-only scripts keep CRLF.
-*.bat   text eol=crlf
-*.ps1   text eol=crlf
-*.cmd   text eol=crlf
-
-# Shell scripts and Linux config MUST be LF — they run inside Alpine
-# containers where `sh` chokes on CRLF line endings.
-*.sh    text eol=lf
-Dockerfile  text eol=lf
-*.service   text eol=lf
-*.toml      text eol=lf
-*.yml       text eol=lf
-*.yaml      text eol=lf
-
-# Binary assets — never touch.
+# Binary assets — never normalize.
 *.png   binary
 *.jpg   binary
 *.jpeg  binary
 *.gif   binary
 *.webp  binary
 *.ico   binary
-*.svg   text eol=lf
 *.woff  binary
 *.woff2 binary
 *.ttf   binary
