@@ -3,10 +3,11 @@ import { useDualStackDiff } from '@/api/queries';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { GradientText } from '@/components/react-bits/GradientText';
+import { QueryBoundary, Shimmer } from '@/components/QueryBoundary';
 import { cn } from '@/lib/utils';
 
 export const DiffPage: React.FC = () => {
-  const { data, isLoading } = useDualStackDiff();
+  const diffQ = useDualStackDiff();
 
   return (
     <div className="space-y-6">
@@ -19,81 +20,89 @@ export const DiffPage: React.FC = () => {
         </p>
       </header>
 
-      {isLoading ? (
-        <Card>
-          <CardContent>
-            <p className="py-8 text-center text-ink-muted">加载中…</p>
-          </CardContent>
-        </Card>
-      ) : !data ? null : (
-        <>
-          <div className="grid gap-4 md:grid-cols-3">
-            <SummaryCard
-              label="仅 IPv4"
-              count={data.v4_only.length}
-              tone="warn"
-              hint="这些规则只在 IPv4 上生效"
-            />
-            <SummaryCard
-              label="仅 IPv6"
-              count={data.v6_only.length}
-              tone="warn"
-              hint="这些规则只在 IPv6 上生效"
-            />
-            <SummaryCard
-              label="已配对"
-              count={data.matched}
-              tone="ok"
-              hint="两边都有等价规则"
-            />
+      <QueryBoundary
+        query={diffQ}
+        skeleton={
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Shimmer key={i} className="h-28 w-full" />
+              ))}
+            </div>
+            <Shimmer className="h-48 w-full" />
           </div>
+        }
+      >
+        {(data) => (
+          <>
+            <div className="grid gap-4 md:grid-cols-3">
+              <SummaryCard
+                label="仅 IPv4"
+                count={data.v4_only.length}
+                tone="warn"
+                hint="这些规则只在 IPv4 上生效"
+              />
+              <SummaryCard
+                label="仅 IPv6"
+                count={data.v6_only.length}
+                tone="warn"
+                hint="这些规则只在 IPv6 上生效"
+              />
+              <SummaryCard
+                label="已配对"
+                count={data.matched}
+                tone="ok"
+                hint="两边都有等价规则"
+              />
+            </div>
 
-          {data.paired_diff.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>字段不一致 · {data.paired_diff.length} 条</CardTitle>
-                <CardDescription>
-                  位置等价但具体字段在 v4 和 v6 上有差异
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {data.paired_diff.map(([a, b], i) => (
-                  <div
-                    key={i}
-                    className="grid gap-2 rounded-md border border-[var(--c-hairline)] p-3 md:grid-cols-2"
-                  >
-                    <div className="rounded-md bg-success-tint/40 px-3 py-2">
-                      <Badge variant="success" dot>v4</Badge>
-                      <pre className="mt-1.5 overflow-x-auto font-mono text-2xs text-ink scrollbar-thin">
-                        {a.raw}
-                      </pre>
+            {data.paired_diff.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>字段不一致 · {data.paired_diff.length} 条</CardTitle>
+                  <CardDescription>
+                    位置等价但具体字段在 v4 和 v6 上有差异
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {data.paired_diff.map(([a, b], i) => (
+                    <div
+                      key={i}
+                      className="grid gap-2 rounded-md border border-[var(--c-hairline)] p-3 md:grid-cols-2"
+                    >
+                      <div className="rounded-md bg-success-tint/40 px-3 py-2">
+                        <Badge variant="success" dot>v4</Badge>
+                        <pre className="mt-1.5 overflow-x-auto font-mono text-2xs text-ink scrollbar-thin">
+                          {a.raw}
+                        </pre>
+                      </div>
+                      <div className="rounded-md bg-warn-tint/40 px-3 py-2">
+                        <Badge variant="warn" dot>v6</Badge>
+                        <pre className="mt-1.5 overflow-x-auto font-mono text-2xs text-ink scrollbar-thin">
+                          {b.raw}
+                        </pre>
+                      </div>
                     </div>
-                    <div className="rounded-md bg-warn-tint/40 px-3 py-2">
-                      <Badge variant="warn" dot>v6</Badge>
-                      <pre className="mt-1.5 overflow-x-auto font-mono text-2xs text-ink scrollbar-thin">
-                        {b.raw}
-                      </pre>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <OnlyList
-              title="仅 IPv4"
-              rules={data.v4_only}
-              tone="success"
-            />
-            <OnlyList
-              title="仅 IPv6"
-              rules={data.v6_only}
-              tone="warn"
-            />
-          </div>
-        </>
-      )}
+            <div className="grid gap-4 md:grid-cols-2">
+              <OnlyList
+                title="仅 IPv4"
+                rules={data.v4_only}
+                tone="success"
+              />
+              <OnlyList
+                title="仅 IPv6"
+                rules={data.v6_only}
+                tone="warn"
+              />
+            </div>
+          </>
+        )}
+      </QueryBoundary>
     </div>
   );
 };

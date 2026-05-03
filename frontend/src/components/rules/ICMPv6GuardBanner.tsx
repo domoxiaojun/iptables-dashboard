@@ -2,7 +2,14 @@ import * as React from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Dialog } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import type { GuardWarning } from '@/types/api';
 
 export const ICMPv6GuardBanner: React.FC<{ warnings: GuardWarning[] }> = ({
@@ -57,37 +64,42 @@ export const ICMPv6GuardModal: React.FC<{
       onOpenChange={(o) => {
         if (!o) onCancel();
       }}
-      title="ICMPv6 守卫拦截"
-      description="应用这些变更可能导致 IPv6 不可用。请仔细确认后再继续。"
-      danger
-      className="max-w-2xl"
     >
-      <ICMPv6GuardBanner warnings={warnings} />
+      <DialogContent danger className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>ICMPv6 守卫拦截</DialogTitle>
+          <DialogDescription>
+            应用这些变更可能导致 IPv6 不可用。请仔细确认后再继续。
+          </DialogDescription>
+        </DialogHeader>
 
-      <label className="mt-5 flex items-start gap-2.5 cursor-pointer rounded-lg border border-[var(--c-hairline)] bg-canvas-soft px-4 py-3 text-sm">
-        <input
-          type="checkbox"
-          className="mt-0.5 h-4 w-4 cursor-pointer accent-danger"
-          checked={acknowledged}
-          onChange={(e) => setAcknowledged(e.target.checked)}
-        />
-        <span className="text-ink">
-          我确认了解阻断 ICMPv6 必备类型可能导致 IPv6 不可用，仍要继续应用并接受审计记录。
-        </span>
-      </label>
+        <ICMPv6GuardBanner warnings={warnings} />
 
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onCancel} disabled={busy}>
-          取消
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={onConfirm}
-          disabled={!acknowledged || busy}
-        >
-          {busy ? '应用中…' : '强制应用 (force)'}
-        </Button>
-      </div>
+        <label className="mt-5 flex items-start gap-2.5 cursor-pointer rounded-lg border border-[var(--c-hairline)] bg-canvas-soft px-4 py-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 cursor-pointer accent-danger"
+            checked={acknowledged}
+            onChange={(e) => setAcknowledged(e.target.checked)}
+          />
+          <span className="text-ink">
+            我确认了解阻断 ICMPv6 必备类型可能导致 IPv6 不可用，仍要继续应用并接受审计记录。
+          </span>
+        </label>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onCancel} disabled={busy}>
+            取消
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={!acknowledged || busy}
+          >
+            {busy ? '应用中…' : '强制应用 (force)'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };

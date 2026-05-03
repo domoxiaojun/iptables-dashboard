@@ -11,6 +11,7 @@ import { ICMPv6GuardModal } from '@/components/rules/ICMPv6GuardBanner';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { QueryBoundary } from '@/components/QueryBoundary';
 import { cn } from '@/lib/utils';
 import type { CounterSample, Family, Mutation, Rule, TableKind } from '@/types/api';
 
@@ -28,7 +29,8 @@ export const RulesPage: React.FC = () => {
   });
 
   const familyForList: Family = family === 'both' ? 'v4' : family;
-  const { data, isLoading, error, refetch } = useRules(familyForList, tableSel);
+  const rulesQ = useRules(familyForList, tableSel);
+  const { data, refetch } = rulesQ;
   const tableEntry = data?.tables.find((t) => t.kind === tableSel);
   const rulesAll = tableEntry?.rules ?? [];
   const rules = filter
@@ -280,22 +282,18 @@ export const RulesPage: React.FC = () => {
       )}
 
       {/* Rules */}
-      {isLoading ? (
-        <SkeletonRows />
-      ) : error ? (
-        <div className="rounded-lg border border-danger/30 bg-danger-tint/40 px-4 py-3 text-sm text-danger">
-          加载失败：{(error as Error).message}
-        </div>
-      ) : (
-        <RuleTable
-          key={liveTick}
-          rules={visibleRules}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onReorder={onReorder}
-          liveCounters={liveOn ? liveCountersRef.current : undefined}
-        />
-      )}
+      <QueryBoundary query={rulesQ} skeleton={<SkeletonRows />}>
+        {() => (
+          <RuleTable
+            key={liveTick}
+            rules={visibleRules}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onReorder={onReorder}
+            liveCounters={liveOn ? liveCountersRef.current : undefined}
+          />
+        )}
+      </QueryBoundary>
     </div>
   );
 };

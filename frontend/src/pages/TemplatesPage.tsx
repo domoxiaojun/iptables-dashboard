@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { TwoStepConfirmModal } from '@/components/rules/TwoStepConfirmModal';
 import { ICMPv6GuardModal } from '@/components/rules/ICMPv6GuardBanner';
+import { QueryBoundary, Shimmer } from '@/components/QueryBoundary';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { Mutation, PreviewResp } from '@/types/api';
@@ -21,7 +22,7 @@ const CATEGORY_TONE: Record<string, 'brand'|'success'|'info'|'warn'|'neutral'> =
 };
 
 export const TemplatesPage: React.FC = () => {
-  const { data, isLoading } = useTemplates();
+  const templatesQ = useTemplates();
   const [previewing, setPreviewing] = React.useState<{ id: number; preview: PreviewResp | null; error?: string } | null>(null);
   const apply = useApply({
     invalidateKeys: [['rules', 'v4', 'filter'], ['rules', 'v6', 'filter'], ['sync-badge']],
@@ -83,62 +84,67 @@ export const TemplatesPage: React.FC = () => {
         </div>
       )}
 
-      {isLoading ? (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-ink-muted">
-            加载中…
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {data?.map((t) => {
-            const tone =
-              t.category && CATEGORY_TONE[t.category]
-                ? CATEGORY_TONE[t.category]!
-                : 'neutral';
-            const showPreview = previewing?.id === t.id;
-            return (
-              <Card key={t.id} interactive>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {t.name}
-                      </CardTitle>
-                      <CardDescription>{t.description}</CardDescription>
+      <QueryBoundary
+        query={templatesQ}
+        skeleton={
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Shimmer key={i} className="h-40 w-full" />
+            ))}
+          </div>
+        }
+      >
+        {(data) => (
+          <div className="grid gap-4 md:grid-cols-2">
+            {data.map((t) => {
+              const tone =
+                t.category && CATEGORY_TONE[t.category]
+                  ? CATEGORY_TONE[t.category]!
+                  : 'neutral';
+              const showPreview = previewing?.id === t.id;
+              return (
+                <Card key={t.id} interactive>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          {t.name}
+                        </CardTitle>
+                        <CardDescription>{t.description}</CardDescription>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5">
+                        {t.built_in && <Badge variant="brand">内置</Badge>}
+                        {t.category && <Badge variant={tone}>{t.category}</Badge>}
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                      {t.built_in && <Badge variant="brand">内置</Badge>}
-                      {t.category && <Badge variant={tone}>{t.category}</Badge>}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => onPreview(t.id)}>
+                        预览
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => onApply(t.id)}
+                        disabled={apply.busy}
+                      >
+                        应用
+                      </Button>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <Button variant="secondary" size="sm" onClick={() => onPreview(t.id)}>
-                      预览
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => onApply(t.id)}
-                      disabled={apply.busy}
-                    >
-                      应用
-                    </Button>
-                  </div>
-                  {showPreview && (
-                    <PreviewBlock
-                      preview={previewing?.preview ?? null}
-                      error={previewing?.error}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                    {showPreview && (
+                      <PreviewBlock
+                        preview={previewing?.preview ?? null}
+                        error={previewing?.error}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </QueryBoundary>
     </div>
   );
 };

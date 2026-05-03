@@ -20,6 +20,7 @@
   --c-bg-soft: #F5F3EE;        /* secondary surface (toolbar / muted) */
   --c-bg-tint: #FAF7F2;        /* row hover, table head */
   --c-bg-deep: #0A2540;        /* dark counterpart for primary buttons */
+  --c-on-deep: #FFFFFF;        /* foreground that lives on bg-deep */
 
   /* ---- Text ---------------------------------------------------------- */
   --c-text: #0A2540;           /* deep navy black */
@@ -139,7 +140,8 @@
   --c-bg-card: #0F1E33;
   --c-bg-soft: #15263F;
   --c-bg-tint: #182B47;
-  --c-bg-deep: #FCFBF7;
+  --c-bg-deep: #635BFF;        /* dark mode flips primary CTA to brand purple */
+  --c-on-deep: #FFFFFF;
 
   --c-text: #E8EDF5;
   --c-text-strong: #FFFFFF;

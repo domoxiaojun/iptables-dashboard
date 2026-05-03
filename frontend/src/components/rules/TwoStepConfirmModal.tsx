@@ -1,7 +1,14 @@
 import * as React from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import { CountdownRing } from '@/components/react-bits/CountdownRing';
 import { api, ApiError } from '@/lib/api';
 import type { ApplyStatusResp } from '@/types/api';
@@ -107,29 +114,29 @@ export const TwoStepConfirmModal: React.FC<{
   const danger = remainingMs <= 5000;
 
   return (
-    <Dialog
-      open
-      onOpenChange={() => {
-        /* not dismissable except via the buttons */
-      }}
-      dismissable={false}
-      title="变更已应用 — 请确认保留"
-      description="如果你被锁在外面，无需操作。倒计时归零后将自动回滚到旧规则。"
-      className="max-w-md"
-    >
-      <div className="flex flex-col items-center gap-5 py-2">
-        <CountdownRing remainingMs={remainingMs} totalMs={totalMs} />
+    <Dialog open onOpenChange={() => { /* not dismissable except via the buttons */ }}>
+      <DialogContent dismissable={false} className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>变更已应用 — 请确认保留</DialogTitle>
+          <DialogDescription>
+            如果你被锁在外面，无需操作。倒计时归零后将自动回滚到旧规则。
+          </DialogDescription>
+        </DialogHeader>
 
-        <p className="px-2 text-center text-sm text-ink-muted">
-          请在
-          <span className="font-semibold text-ink-strong">
-            {Math.ceil(remainingMs / 1000)}
-          </span>
-          秒内决定。期间内规则<strong className="text-ink-strong">已生效</strong>，
-          但服务器会跟踪这个 token，超时未确认就自动回滚。
-        </p>
+        <div className="flex flex-col items-center gap-5 py-2">
+          <CountdownRing remainingMs={remainingMs} totalMs={totalMs} />
 
-        <div className="flex w-full gap-2 pt-1">
+          <p className="px-2 text-center text-sm text-ink-muted">
+            请在
+            <span className="font-semibold text-ink-strong">
+              {Math.ceil(remainingMs / 1000)}
+            </span>
+            秒内决定。期间内规则<strong className="text-ink-strong">已生效</strong>，
+            但服务器会跟踪这个 token，超时未确认就自动回滚。
+          </p>
+        </div>
+
+        <DialogFooter>
           <Button
             variant="destructive"
             className="flex-1"
@@ -146,8 +153,8 @@ export const TwoStepConfirmModal: React.FC<{
           >
             保留更改
           </Button>
-        </div>
-      </div>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };

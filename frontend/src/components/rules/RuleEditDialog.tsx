@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
 import type { Family, Mutation, Rule, RuleSpec, TableKind } from '@/types/api';
@@ -136,122 +136,125 @@ export const RuleEditDialog: React.FC<{
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEdit ? '编辑规则' : '新建规则'}
-      description={`${family.toUpperCase()} · ${table} · ${chain}`}
-      className="max-w-2xl"
-    >
-      <form onSubmit={handleSubmit(submit)} className="space-y-5">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <SelectField
-            label="协议"
-            hint="-p"
-            options={COMMON_PROTOCOLS}
-            {...register('protocol')}
-          />
-          <SelectField
-            label="跳转目标"
-            hint="-j"
-            options={COMMON_JUMPS}
-            {...register('jump')}
-          />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? '编辑规则' : '新建规则'}</DialogTitle>
+          <DialogDescription>
+            {`${family.toUpperCase()} · ${table} · ${chain}`}
+          </DialogDescription>
+        </DialogHeader>
 
-          <FormField
-            label="源地址"
-            hint="-s · 加 ! 取反"
-            placeholder="192.168.1.0/24 或 2001:db8::/32"
-            {...register('source')}
-          />
-          <FormField
-            label="目的地址"
-            hint="-d"
-            placeholder="10.0.0.1 或 ::1"
-            {...register('destination')}
-          />
+        <form onSubmit={handleSubmit(submit)} className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <SelectField
+              label="协议"
+              hint="-p"
+              options={COMMON_PROTOCOLS}
+              {...register('protocol')}
+            />
+            <SelectField
+              label="跳转目标"
+              hint="-j"
+              options={COMMON_JUMPS}
+              {...register('jump')}
+            />
 
-          <FormField
-            label="入接口"
-            hint="-i"
-            placeholder="eth0"
-            error={errors.in_interface?.message}
-            {...register('in_interface')}
-          />
-          <FormField
-            label="出接口"
-            hint="-o"
-            placeholder="eth0"
-            error={errors.out_interface?.message}
-            {...register('out_interface')}
-          />
-
-          <FormField
-            label="源端口"
-            hint="--sport"
-            placeholder="22 或 1024:65535"
-            {...register('sport')}
-          />
-          <FormField
-            label="目的端口"
-            hint="--dport"
-            placeholder="80 或 1024:65535"
-            {...register('dport')}
-          />
-        </div>
-
-        <details className="rounded-lg border border-[var(--c-hairline)] bg-canvas-tint/40 p-4 [&[open]]:bg-canvas-tint/60">
-          <summary className="cursor-pointer select-none text-sm font-medium text-ink-muted hover:text-ink-strong">
-            高级目标参数（可选）
-          </summary>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
-              label="REJECT 类型"
-              hint="--reject-with"
-              placeholder="icmp-port-unreachable"
-              {...register('reject_with')}
+              label="源地址"
+              hint="-s · 加 ! 取反"
+              placeholder="192.168.1.0/24 或 2001:db8::/32"
+              {...register('source')}
             />
             <FormField
-              label="LOG 前缀"
-              hint="--log-prefix"
-              placeholder="iptables drop:"
-              {...register('log_prefix')}
+              label="目的地址"
+              hint="-d"
+              placeholder="10.0.0.1 或 ::1"
+              {...register('destination')}
+            />
+
+            <FormField
+              label="入接口"
+              hint="-i"
+              placeholder="eth0"
+              error={errors.in_interface?.message}
+              {...register('in_interface')}
+            />
+            <FormField
+              label="出接口"
+              hint="-o"
+              placeholder="eth0"
+              error={errors.out_interface?.message}
+              {...register('out_interface')}
+            />
+
+            <FormField
+              label="源端口"
+              hint="--sport"
+              placeholder="22 或 1024:65535"
+              {...register('sport')}
+            />
+            <FormField
+              label="目的端口"
+              hint="--dport"
+              placeholder="80 或 1024:65535"
+              {...register('dport')}
             />
           </div>
-        </details>
 
-        <FormField
-          label="备注"
-          placeholder="例如：阻止已知扫描器"
-          error={errors.comment?.message}
-          {...register('comment')}
-        />
+          <details className="rounded-lg border border-[var(--c-hairline)] bg-canvas-tint/40 p-4 [&[open]]:bg-canvas-tint/60">
+            <summary className="cursor-pointer select-none text-sm font-medium text-ink-muted hover:text-ink-strong">
+              高级目标参数（可选）
+            </summary>
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                label="REJECT 类型"
+                hint="--reject-with"
+                placeholder="icmp-port-unreachable"
+                {...register('reject_with')}
+              />
+              <FormField
+                label="LOG 前缀"
+                hint="--log-prefix"
+                placeholder="iptables drop:"
+                {...register('log_prefix')}
+              />
+            </div>
+          </details>
 
-        {!isEdit && (
-          <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-[var(--c-hairline)] bg-brand-tint/40 px-4 py-3 hover:bg-brand-tint transition-colors duration-fast">
-            <input
-              type="checkbox"
-              {...register('also_other_family')}
-              className="h-4 w-4 cursor-pointer accent-brand"
-            />
-            <span className="text-sm text-ink">
-              同时写入 <strong className="text-brand">{otherFamily.toUpperCase()}</strong>
-              <span className="ml-1.5 text-xs text-ink-muted">
-                — 含协议族专属字段时会自动取消
+          <FormField
+            label="备注"
+            placeholder="例如：阻止已知扫描器"
+            error={errors.comment?.message}
+            {...register('comment')}
+          />
+
+          {!isEdit && (
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-[var(--c-hairline)] bg-brand-tint/40 px-4 py-3 hover:bg-brand-tint transition-colors duration-fast">
+              <input
+                type="checkbox"
+                {...register('also_other_family')}
+                className="h-4 w-4 cursor-pointer accent-brand"
+              />
+              <span className="text-sm text-ink">
+                同时写入 <strong className="text-brand">{otherFamily.toUpperCase()}</strong>
+                <span className="ml-1.5 text-xs text-ink-muted">
+                  — 含协议族专属字段时会自动取消
+                </span>
               </span>
-            </span>
-          </label>
-        )}
+            </label>
+          )}
 
-        <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            取消
-          </Button>
-          <Button type="submit" variant="primary">
-            {isEdit ? '保存修改' : '加入暂存'}
-          </Button>
-        </div>
-      </form>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button type="submit" variant="primary">
+              {isEdit ? '保存修改' : '加入暂存'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };

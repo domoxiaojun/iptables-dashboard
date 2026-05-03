@@ -35,8 +35,8 @@ const base =
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-canvas-deep text-white border border-canvas-deep ' +
-    'shadow-1 hover:bg-black hover:-translate-y-px hover:shadow-2',
+    'bg-canvas-deep text-canvas-on-deep border border-canvas-deep ' +
+    'shadow-1 hover:opacity-90 hover:-translate-y-px hover:shadow-2',
   gradient:
     'bg-grad-brand text-white border border-transparent ' +
     'shadow-accent hover:-translate-y-px hover:shadow-accent-pop',
