@@ -522,11 +522,6 @@ pub async fn import_rules(
     State(app): State<AppState>,
     Json(req): Json<ImportReq>,
 ) -> AppResult<Json<ImportResp>> {
-    let v4_before = app.executor.save(Family::V4).await.unwrap_or_default();
-    let v6_before = app.executor.save(Family::V6).await.unwrap_or_default();
-    let mut v4 = parse_save(&v4_before, Family::V4)?;
-    let mut v6 = parse_save(&v6_before, Family::V6)?;
-
     // Wrap the pasted text in a minimal iptables-save format if it's just
     // bare `-A` lines (the common case when pasting from docs).
     let text = req.text.trim();

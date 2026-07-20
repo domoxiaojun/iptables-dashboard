@@ -93,10 +93,8 @@ pub async fn build(state: AppState, config: Arc<Config>) -> anyhow::Result<axum:
         .fallback(assets::serve)
         .layer(middleware::from_fn_with_state(state.clone(), ip_whitelist))
         .layer(middleware::from_fn_with_state(
-            state.clone(),
-            move |req: Request, next: Next| async move {
-                rate_limit_middleware(req, next, state.clone(), rate_limiter.clone()).await
-            },
+            (state.clone(), rate_limiter.clone()),
+            rate_limit_middleware,
         ))
         .layer(CompressionLayer::new())
         .layer(build_cors_layer(&config))
@@ -200,11 +198,10 @@ async fn ip_whitelist(
 /// Tracks request timestamps per IP and rejects if the count exceeds the
 /// configured limit within the last 60 seconds.
 async fn rate_limit_middleware(
-    State(app): State<AppState>,
+    State((app, rate_limiter)): State<(AppState, Arc<Mutex<HashMap<String, Vec<i64>>>>)>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     req: Request,
     next: Next,
-    rate_limiter: Arc<Mutex<HashMap<String, Vec<i64>>>>,
 ) -> Result<Response, StatusCode> {
     let limit = app.config.security.api_rate_limit;
     if limit == 0 {
@@ -255,7 +252,7 @@ fn apply_security_headers(router: axum::Router<AppState>) -> axum::Router<AppSta
             axum::http::HeaderValue::from_static("strict-origin-when-cross-origin"),
         ))
         .layer(SetResponseHeaderLayer::overriding(
-            axum::http::header::PERMISSIONS_POLICY,
+            axum::http::HeaderName::from_static("permissions-policy"),
             axum::http::HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),
         ))
         .layer(SetResponseHeaderLayer::overriding(
