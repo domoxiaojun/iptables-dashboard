@@ -344,7 +344,7 @@ const SelectField = React.forwardRef<
     >
       {options.map((o) => (
         <option key={o} value={o}>
-          {o === '' ? '(未指定)' : o}
+          {o === '' ? '(未指定 = 全部协议)' : o}
         </option>
       ))}
     </select>
