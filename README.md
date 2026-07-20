@@ -40,7 +40,24 @@ docker run -d --name iptables-dashboard \
 
 ## docker-compose 示例
 
-参见 [`docker/docker-compose.yml`](docker/docker-compose.yml)。
+参见 [`docker/docker-compose.yml`](docker/docker-compose.yml)（拉 ghcr.io 上的官方镜像）。
+
+## 自托管：在 VPS 上一条命令构建运行（无需 host 工具链）
+
+仓库自带一个 multi-stage 的 [`docker/Dockerfile.allinone`](docker/Dockerfile.allinone)：先在 builder 阶段编前端 + Rust，再把产物拷进 alpine runtime；本机不需要装 cargo / pnpm / node。
+
+```bash
+git clone https://github.com/domoxiaojun/iptables-dashboard && cd iptables-dashboard
+docker build -f docker/Dockerfile.allinone -t iptd:local .
+docker run -d --name iptd \
+  --net=host --cap-add=NET_ADMIN --cap-add=NET_RAW \
+  -v ipt-data:/var/lib/iptables-dashboard \
+  -v ipt-config:/etc/iptables-dashboard \
+  --restart=unless-stopped \
+  iptd:local
+```
+
+> 跟 [`docker/Dockerfile`](docker/Dockerfile) 的关系：后者是 release.yml CI 用的 **runtime-only** 版本，binary 由 host 端 `cargo-zigbuild` 预先交叉编译并放进 `docker/bin/`，本地不能直接 `docker build`。要做多架构发布走 CI；要在单台 VPS 自托管走 `Dockerfile.allinone`。
 
 ## 为什么需要这些 capabilities？
 
@@ -107,7 +124,7 @@ Highlights:
 - Two-step activation: every change auto-rolls back if not confirmed in N seconds
 - ICMPv6 guard prevents you from breaking IPv6 with a blanket DROP
 - Snapshots, audit log, brute-force protection, built-in rule templates
-- Backend: Rust 1.83 + axum 0.8 + sqlx + tower-sessions
+- Backend: Rust 1.88 + axum 0.8 + sqlx + tower-sessions
 - Frontend: React 18 + Vite + TanStack Router + TanStack Query + Tailwind + shadcn-style components
 
 See `docs/` for deployment and architecture details.

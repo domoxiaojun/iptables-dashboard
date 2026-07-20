@@ -85,6 +85,22 @@ pub struct SecurityConfig {
     /// matched, not the proxy peer.
     #[serde(default)]
     pub allowed_ips: Vec<String>,
+    /// Session idle timeout in seconds. Users with no activity for this
+    /// duration will be logged out. Default: 8 hours (28800s).
+    #[serde(default = "default_session_idle")]
+    pub session_idle_seconds: u64,
+    /// Maximum write API requests per minute per IP. 0 = disabled.
+    /// Default: 120.
+    #[serde(default = "default_rate_limit")]
+    pub api_rate_limit: u32,
+}
+
+fn default_session_idle() -> u64 {
+    28800 // 8 hours
+}
+
+fn default_rate_limit() -> u32 {
+    120
 }
 
 impl Default for SecurityConfig {
@@ -95,6 +111,8 @@ impl Default for SecurityConfig {
             lockout_seconds: 900,
             trusted_proxies: Vec::new(),
             allowed_ips: Vec::new(),
+            session_idle_seconds: default_session_idle(),
+            api_rate_limit: default_rate_limit(),
         }
     }
 }

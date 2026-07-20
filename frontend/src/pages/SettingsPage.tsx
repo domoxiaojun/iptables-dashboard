@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { api, ApiError } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 
 const pwSchema = z
   .object({
@@ -71,6 +72,12 @@ export const SettingsPage: React.FC = () => {
       </Card>
 
       <ChangePasswordCard />
+
+      {/* Runtime Config */}
+      <RuntimeConfigCard />
+
+      {/* Backup */}
+      <BackupCard />
 
       {/* About */}
       <Card>
@@ -189,3 +196,97 @@ const Field: React.FC<{
     {error && <p className="text-2xs text-danger">{error}</p>}
   </div>
 );
+
+// --- Runtime Config Card ---
+
+interface EffectiveConfig {
+  server: { listen: string };
+  paths: { data_dir: string; db_path: string };
+  security: {
+    two_step_seconds: number;
+    max_login_attempts: number;
+    lockout_seconds: number;
+    session_idle_seconds: number;
+    api_rate_limit: number;
+    trusted_proxies: string[];
+    allowed_ips: string[];
+  };
+  logging: { level: string; format: string };
+  cors: { allowed_origins: string[] };
+}
+
+const RuntimeConfigCard: React.FC = () => {
+  const { data: cfg } = useQuery({
+    queryKey: ['config-effective'],
+    queryFn: () => api.get<EffectiveConfig>('/config/effective'),
+  });
+
+  if (!cfg) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>运行时配置</CardTitle>
+        <CardDescription>当前生效的安全与运行参数</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <ConfigItem label="监听地址" value={cfg.server.listen} />
+          <ConfigItem label="数据目录" value={cfg.paths.data_dir} />
+          <ConfigItem label="确认窗口" value={`${cfg.security.two_step_seconds}s`} />
+          <ConfigItem label="登录限制" value={`${cfg.security.max_login_attempts} 次 / ${cfg.security.lockout_seconds}s`} />
+          <ConfigItem label="会话超时" value={`${Math.round(cfg.security.session_idle_seconds / 3600)}h`} />
+          <ConfigItem label="API 限流" value={`${cfg.security.api_rate_limit} req/min`} />
+          <ConfigItem label="日志级别" value={cfg.logging.level} />
+          <ConfigItem label="日志格式" value={cfg.logging.format} />
+          <ConfigItem label="允许 IP" value={cfg.security.allowed_ips.length > 0 ? cfg.security.allowed_ips.join(', ') : '全部'} />
+        </dl>
+      </CardContent>
+    </Card>
+  );
+};
+
+const ConfigItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div>
+    <dt className="text-2xs uppercase tracking-wider text-ink-dim">{label}</dt>
+    <dd className="mt-0.5 font-mono text-xs text-ink-strong truncate" title={value}>{value}</dd>
+  </div>
+);
+
+// --- Backup Card ---
+
+const BackupCard: React.FC = () => {
+  const onDownload = async () => {
+    try {
+      const resp = await fetch('/api/v1/backup', { credentials: 'include' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'iptables-dashboard-backup.sqlite';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('备份已下载');
+    } catch (e) {
+      toast.error('备份失败', { description: (e as Error).message });
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>数据备份</CardTitle>
+        <CardDescription>下载 SQLite 数据库完整备份</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-3 text-xs text-ink-muted">
+          备份包含所有用户、快照、模板和审计记录。建议定期备份。
+        </p>
+        <Button variant="secondary" onClick={onDownload}>
+          下载备份
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};

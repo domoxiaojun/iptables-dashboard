@@ -19,7 +19,7 @@ use ipt_executor::{Executor, LocalExec};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 #[tokio::main]
@@ -103,6 +103,7 @@ async fn main() -> anyhow::Result<()> {
         two_phase,
         stats,
         rules_cache: RulesCache::new(),
+        started_at: Instant::now(),
     };
 
     let app = app::build(state, Arc::new(config.clone())).await?;

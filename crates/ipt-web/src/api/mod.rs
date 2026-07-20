@@ -1,6 +1,7 @@
 pub mod apply;
 pub mod auth;
 pub mod chains;
+pub mod config;
 pub mod logs;
 pub mod rules;
 pub mod snapshots;

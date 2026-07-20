@@ -137,6 +137,8 @@ export interface AuditRecord {
   /** Backend stores arbitrary JSON string here; parse client-side if needed. */
   details_json?: string;
   result: string;
+  ip?: string;
+  user_agent?: string;
 }
 
 export interface Me {

@@ -112,9 +112,6 @@ impl TwoPhaseManager {
                 user: user.into(),
                 pre_snapshot_id: pre_id,
                 expires_at,
-                attempts: 0,
-                last_error: None,
-                failed_at: None,
             },
         )
         .await?;

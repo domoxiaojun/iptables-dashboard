@@ -14,6 +14,10 @@ pub struct AuditRecord {
     pub target: Option<String>,
     pub details: Option<Value>,
     pub result: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_agent: Option<String>,
 }
 
 fn from_row(row: SqliteRow) -> AuditRecord {
@@ -27,6 +31,8 @@ fn from_row(row: SqliteRow) -> AuditRecord {
         target: row.get("target"),
         details,
         result: row.get("result"),
+        ip: row.try_get("ip").ok(),
+        user_agent: row.try_get("user_agent").ok(),
     }
 }
 
@@ -39,8 +45,8 @@ pub fn init_fallback_dir(dir: PathBuf) {
     let _ = FALLBACK_DIR.set(dir);
 }
 
-/// Insert an audit row. Returns sqlx::Error on DB failure — callers that
-/// must not lose the entry should use [`must_write`] instead.
+/// Insert an audit row with optional client IP. Returns sqlx::Error on DB
+/// failure — callers that must not lose the entry should use [`must_write`].
 pub async fn write(
     pool: &SqlitePool,
     user: &str,
@@ -49,11 +55,24 @@ pub async fn write(
     details: Option<&Value>,
     result: &str,
 ) -> Result<(), sqlx::Error> {
+    write_with_ip(pool, user, action, target, details, result, None).await
+}
+
+/// Insert an audit row with client IP.
+pub async fn write_with_ip(
+    pool: &SqlitePool,
+    user: &str,
+    action: &str,
+    target: Option<&str>,
+    details: Option<&Value>,
+    result: &str,
+    ip: Option<&str>,
+) -> Result<(), sqlx::Error> {
     let now = Utc::now().timestamp();
     let details_json = details.map(|v| serde_json::to_string(v).unwrap_or_default());
     sqlx::query(
-        "INSERT INTO audit_log (ts, user, action, target, details_json, result)
-         VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO audit_log (ts, user, action, target, details_json, result, ip)
+         VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(now)
     .bind(user)
@@ -61,6 +80,7 @@ pub async fn write(
     .bind(target)
     .bind(details_json)
     .bind(result)
+    .bind(ip)
     .execute(pool)
     .await?;
     Ok(())

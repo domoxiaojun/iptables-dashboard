@@ -2,7 +2,6 @@
 
 use crate::api::rules::{apply_mutation, ruleset_hash, Mutation};
 use crate::auth::{require_password_changed, AuthSession};
-use crate::db::repo::audit;
 use crate::error::{AppError, AppResult};
 use crate::state::AppState;
 use axum::extract::{Path, State};

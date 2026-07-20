@@ -1,8 +1,11 @@
 services:
+  # Dev backend: use the official rust:1.88-alpine image directly so we get
+  # cargo/rustc preinstalled. The runtime-only docker/Dockerfile next to
+  # this file is wrong here — it has no Rust toolchain and expects a
+  # pre-built binary. iptables CLIs are installed at container start so the
+  # Executor can fork them.
   iptables-dashboard:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: rust:1.88-alpine
     container_name: iptables-dashboard-dev
     network_mode: host
     cap_add:
@@ -10,13 +13,16 @@ services:
       - NET_RAW
     volumes:
       - ../:/workspace
-      - cargo-cache:/root/.cargo/registry
+      - cargo-cache:/usr/local/cargo/registry
       - target-cache:/workspace/target
     working_dir: /workspace
     environment:
       IPTD_LISTEN: 0.0.0.0:7642
       RUST_LOG: debug
-    command: ["cargo", "run", "--bin", "iptables-dashboard"]
+      IPTD_DATA_DIR: /workspace/.dev-data
+    command: >
+      sh -c "apk add --no-cache musl-dev pkgconfig gcc iptables iptables-legacy ip6tables &&
+             cargo run --bin iptables-dashboard"
 
   frontend:
     image: node:20-alpine

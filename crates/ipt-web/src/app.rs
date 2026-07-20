@@ -14,11 +14,14 @@ use axum::routing::{get, post};
 use axum::Json;
 use axum_login::AuthManagerLayerBuilder;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use tower_http::compression::CompressionLayer;
 use tower_http::cors::CorsLayer;
+use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use tower_sessions::cookie::time::Duration as CookieDuration;
 use tower_sessions::cookie::SameSite;
@@ -26,6 +29,8 @@ use tower_sessions::{Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::SqliteStore;
 
 pub async fn build(state: AppState, config: Arc<Config>) -> anyhow::Result<axum::Router> {
+    // Rate limiter state
+    let rate_limiter = Arc::new(Mutex::new(HashMap::<String, Vec<i64>>::new()));
     // Session store on the same SQLite db.
     let session_store = SqliteStore::new(state.db.clone());
     session_store.migrate().await?;
@@ -51,6 +56,7 @@ pub async fn build(state: AppState, config: Arc<Config>) -> anyhow::Result<axum:
         )
         .route("/api/v1/families/{family}/rules", get(api::rules::list_rules))
         .route("/api/v1/rules/preview", post(api::rules::preview))
+        .route("/api/v1/rules/import", post(api::rules::import_rules))
         .route("/api/v1/diff/dual-stack", get(api::rules::dual_stack_compare))
         .route("/api/v1/diff/sync-badge", get(api::rules::sync_badge))
         .route("/api/v1/apply", post(api::apply::apply))
@@ -72,6 +78,8 @@ pub async fn build(state: AppState, config: Arc<Config>) -> anyhow::Result<axum:
         .route("/api/v1/stats/stream", get(api::stats::stream))
         .route("/api/v1/logs/stream", get(api::logs::stream))
         .route("/api/v1/audit", get(audit_list))
+        .route("/api/v1/config/effective", get(api::config::effective))
+        .route("/api/v1/backup", get(api::config::backup))
         .route_layer(middleware::from_fn(require_auth));
 
     // Public routes.
@@ -84,11 +92,20 @@ pub async fn build(state: AppState, config: Arc<Config>) -> anyhow::Result<axum:
         .merge(public)
         .fallback(assets::serve)
         .layer(middleware::from_fn_with_state(state.clone(), ip_whitelist))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            move |req: Request, next: Next| async move {
+                rate_limit_middleware(req, next, state.clone(), rate_limiter.clone()).await
+            },
+        ))
         .layer(CompressionLayer::new())
         .layer(build_cors_layer(&config))
         .layer(TraceLayer::new_for_http())
         .layer(auth_layer)
         .with_state(state);
+
+    // Apply security headers after all other layers so they are on every response.
+    let app = apply_security_headers(app);
 
     Ok(app)
 }
@@ -177,6 +194,76 @@ async fn ip_whitelist(
         return Err(StatusCode::FORBIDDEN);
     }
     Ok(next.run(req).await)
+}
+
+/// Simple sliding-window rate limiter for write operations (POST/PUT/DELETE).
+/// Tracks request timestamps per IP and rejects if the count exceeds the
+/// configured limit within the last 60 seconds.
+async fn rate_limit_middleware(
+    State(app): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    req: Request,
+    next: Next,
+    rate_limiter: Arc<Mutex<HashMap<String, Vec<i64>>>>,
+) -> Result<Response, StatusCode> {
+    let limit = app.config.security.api_rate_limit;
+    if limit == 0 {
+        return Ok(next.run(req).await);
+    }
+    // Only rate-limit write methods
+    let method = req.method().clone();
+    if method == axum::http::Method::GET || method == axum::http::Method::HEAD || method == axum::http::Method::OPTIONS {
+        return Ok(next.run(req).await);
+    }
+
+    let real_ip = api::auth::client_ip(
+        req.headers(),
+        addr,
+        &app.config.security.trusted_proxies,
+    );
+    let now = chrono::Utc::now().timestamp();
+    let window_start = now - 60;
+
+    let mut map = rate_limiter.lock().await;
+    let timestamps = map.entry(real_ip.clone()).or_insert_with(Vec::new);
+    // Prune old entries
+    timestamps.retain(|&t| t > window_start);
+
+    if timestamps.len() as u32 >= limit {
+        tracing::warn!(ip = %real_ip, count = timestamps.len(), "rate limit exceeded");
+        return Err(StatusCode::TOO_MANY_REQUESTS);
+    }
+    timestamps.push(now);
+    drop(map);
+
+    Ok(next.run(req).await)
+}
+
+/// Apply all security headers to the router.
+fn apply_security_headers(router: axum::Router<AppState>) -> axum::Router<AppState> {
+    router
+        .layer(SetResponseHeaderLayer::overriding(
+            axum::http::header::X_CONTENT_TYPE_OPTIONS,
+            axum::http::HeaderValue::from_static("nosniff"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            axum::http::header::X_FRAME_OPTIONS,
+            axum::http::HeaderValue::from_static("DENY"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            axum::http::header::REFERRER_POLICY,
+            axum::http::HeaderValue::from_static("strict-origin-when-cross-origin"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            axum::http::header::PERMISSIONS_POLICY,
+            axum::http::HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),
+        ))
+        .layer(SetResponseHeaderLayer::overriding(
+            axum::http::header::CONTENT_SECURITY_POLICY,
+            axum::http::HeaderValue::from_static(
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'"
+            ),
+        ))
 }
 
 #[derive(Serialize)]

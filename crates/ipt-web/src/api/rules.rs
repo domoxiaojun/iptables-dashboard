@@ -16,6 +16,42 @@ use ipt_core::{
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
+/// Validate a RuleSpec before applying mutations.
+/// Returns an error message if validation fails.
+fn validate_spec(spec: &RuleSpec) -> Result<(), String> {
+    // Validate interface names (max 15 chars, alphanumeric + . _ + -)
+    let iface_re = |s: &str| {
+        s.len() <= 15
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || "._+-".contains(c))
+    };
+    if let Some(ref i) = spec.in_interface {
+        if !iface_re(i) {
+            return Err(format!("invalid in_interface: '{}'", i));
+        }
+    }
+    if let Some(ref o) = spec.out_interface {
+        if !iface_re(o) {
+            return Err(format!("invalid out_interface: '{}'", o));
+        }
+    }
+    // Validate port ranges (basic: digits and colon only)
+    let port_ok = |s: &str| {
+        s.split(':').all(|p| p.parse::<u32>().map_or(false, |n| n <= 65535))
+    };
+    if let Some(ref p) = spec.sport {
+        if !port_ok(p) {
+            return Err(format!("invalid sport port: '{}'", p));
+        }
+    }
+    if let Some(ref p) = spec.dport {
+        if !port_ok(p) {
+            return Err(format!("invalid dport port: '{}'", p));
+        }
+    }
+    Ok(())
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ListQuery {
     pub table: Option<String>,
@@ -194,6 +230,7 @@ pub fn apply_mutation(
 ) -> Result<(), AppError> {
     match m {
         Mutation::Create(c) => {
+            validate_spec(&c.spec).map_err(AppError::Validation)?;
             insert_rule(target_save_mut(v4, v6, c.family), c.table, &c.chain, c.index, &c.spec)?;
             if c.also_for_other_family {
                 let other = match c.family {
@@ -208,6 +245,7 @@ pub fn apply_mutation(
             }
         }
         Mutation::Update(u) => {
+            validate_spec(&u.spec).map_err(AppError::Validation)?;
             update_rule(
                 target_save_mut(v4, v6, u.family),
                 u.table,
@@ -452,4 +490,86 @@ pub fn count_ops(d: &ipt_core::RuleDiff) -> (usize, usize, usize) {
         }
     }
     (a, r, m)
+}
+
+/// POST /api/v1/rules/import — parse pasted iptables-save lines and return
+/// the resulting mutations (as a preview).
+#[derive(Debug, Deserialize)]
+pub struct ImportReq {
+    /// Raw iptables-save format text (one or more `-A CHAIN ...` lines).
+    pub text: String,
+    /// Target family.
+    pub family: Family,
+    /// Target table (if not specified in the text).
+    pub table: TableKind,
+    /// Target chain (if not specified in the text).
+    pub chain: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ImportResp {
+    pub mutations: Vec<Mutation>,
+    pub errors: Vec<ImportError>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ImportError {
+    pub line: usize,
+    pub message: String,
+}
+
+pub async fn import_rules(
+    State(app): State<AppState>,
+    Json(req): Json<ImportReq>,
+) -> AppResult<Json<ImportResp>> {
+    let v4_before = app.executor.save(Family::V4).await.unwrap_or_default();
+    let v6_before = app.executor.save(Family::V6).await.unwrap_or_default();
+    let mut v4 = parse_save(&v4_before, Family::V4)?;
+    let mut v6 = parse_save(&v6_before, Family::V6)?;
+
+    // Wrap the pasted text in a minimal iptables-save format if it's just
+    // bare `-A` lines (the common case when pasting from docs).
+    let text = req.text.trim();
+    let wrapped = if text.contains("*filter") || text.contains("*nat") {
+        text.to_string()
+    } else {
+        // Wrap bare -A lines in a table context
+        format!(
+            "*{}\n:{} - [0:0]\n{}\nCOMMIT\n",
+            req.table,
+            req.chain,
+            text.lines()
+                .filter(|l| l.trim().starts_with('-'))
+                .collect::<Vec<_>>()
+                .join("\n")
+        )
+    };
+
+    let parsed = parse_save(&wrapped, req.family)?;
+    let mut mutations = Vec::new();
+    let mut errors = Vec::new();
+
+    for (table_kind, table) in &parsed.tables {
+        for rule in &table.rules {
+            let mutation = Mutation::Create(CreateRuleReq {
+                family: req.family,
+                table: *table_kind,
+                chain: rule.chain.clone(),
+                index: None,
+                spec: rule.spec.clone(),
+                also_for_other_family: false,
+            });
+            // Validate
+            if let Err(e) = validate_spec(&rule.spec) {
+                errors.push(ImportError {
+                    line: rule.seq as usize + 1,
+                    message: e,
+                });
+            } else {
+                mutations.push(mutation);
+            }
+        }
+    }
+
+    Ok(Json(ImportResp { mutations, errors }))
 }

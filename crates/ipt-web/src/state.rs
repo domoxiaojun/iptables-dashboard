@@ -22,6 +22,8 @@ pub struct AppState {
     /// every few seconds; without this each poll forks iptables-save +
     /// reparses several KB of text. See [`RulesCache::get_or_fetch`].
     pub rules_cache: RulesCache,
+    /// When the process started — used for uptime calculation in /health.
+    pub started_at: Instant,
 }
 
 #[derive(Clone, Default)]

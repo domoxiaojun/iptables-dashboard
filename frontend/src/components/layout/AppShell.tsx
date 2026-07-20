@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { SyncBadge } from '@/components/rules/SyncBadge';
 import { useMe } from '@/api/queries';
 import { api } from '@/lib/api';
 import { useTheme, type Theme } from '@/lib/theme';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { cn } from '@/lib/utils';
 
 const navTop = [
@@ -51,6 +53,12 @@ export const AppShell: React.FC = () => {
     }
     navigate({ to: '/login' });
   };
+
+  // Idle timeout: auto-logout after 8h of inactivity.
+  useIdleTimeout(28800, () => {
+    toast.info('会话已过期', { description: '长时间未操作，请重新登录' });
+    logout();
+  });
 
   return (
     <div className="bg-aurora-warm relative flex min-h-screen">

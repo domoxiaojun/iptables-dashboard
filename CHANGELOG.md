@@ -16,10 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dialog 升级为 @radix-ui/react-dialog（focus trap / portal / scroll lock / 真正可访问），保持原对外 API + 新 `dismissable` prop
 - 新增 Tooltip、DropdownMenu 组件（基于 radix），Button 支持 `asChild`（radix Slot）
 - IP 白名单（`security.allowed_ips`，支持精确 IP + CIDR；loopback 访问 `/api/v1/health` 始终放行）
+- `docker/Dockerfile.allinone`：multi-stage builder + runtime，`docker build` 一条命令在 VPS 上端到端构建（无需 host 装 cargo / pnpm / node）；与 release.yml 的 multi-arch CI 路径并存
 
 ### Changed
 - 两步激活简化为两层（in-process oneshot + pending.json + recover）；wedged-runtime 兜底改由 systemd / docker restart 配合启动期 recover 提供
 - partial-rollback 失败不再写 `EMERGENCY.md`，改为 audit log 记录错误 + 保留 pending 行，等下次 abort / startup recover 重试
+
+### Fixed
+- `docker/docker-compose.dev.yml` 的 backend service 之前 `build:` 指向 runtime-only 的 `docker/Dockerfile`，但该镜像里既无 cargo 又要 COPY 不存在的 `docker/bin/iptables-dashboard`，导致开发栈完全跑不起来。改为直接用 `rust:1.88-alpine`，容器启动时 apk 装 iptables CLI
 
 ### Removed
 - Layer 3 `at` 外部兜底（`schedule_external_abort` / `_internal/apply` 路由 / 容器内 atd / Dockerfile 装 `at`）

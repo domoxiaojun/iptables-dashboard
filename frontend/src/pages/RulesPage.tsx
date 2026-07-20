@@ -1,13 +1,18 @@
 import * as React from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { useUiStore } from '@/store/ui';
 import { useRules } from '@/api/queries';
 import { useApply } from '@/api/apply';
 import { useEventSource } from '@/lib/useEventSource';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { FamilySwitcher } from '@/components/rules/FamilySwitcher';
 import { RuleTable } from '@/components/rules/RuleTable';
 import { RuleEditDialog } from '@/components/rules/RuleEditDialog';
+import { RuleImportDialog } from '@/components/rules/RuleImportDialog';
 import { TwoStepConfirmModal } from '@/components/rules/TwoStepConfirmModal';
 import { ICMPv6GuardModal } from '@/components/rules/ICMPv6GuardBanner';
+import { ChangePreview } from '@/components/rules/ChangePreview';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -18,15 +23,19 @@ import type { CounterSample, Family, Mutation, Rule, TableKind } from '@/types/a
 const TABLES: TableKind[] = ['filter', 'nat', 'mangle', 'raw'];
 
 export const RulesPage: React.FC = () => {
+  const navigate = useNavigate();
   const family = useUiStore((s) => s.family);
   const setTable = useUiStore((s) => s.setTable);
   const tableSel = useUiStore((s) => s.table) as TableKind;
   const [chain, setChain] = React.useState<string>('INPUT');
   const [filter, setFilter] = React.useState<string>('');
+  const searchRef = React.useRef<HTMLInputElement>(null);
   const [staged, setStaged] = React.useState<Mutation[]>([]);
   const [editor, setEditor] = React.useState<{ open: boolean; rule?: Rule }>({
     open: false,
   });
+  const [importOpen, setImportOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState<Set<number>>(new Set());
 
   const familyForList: Family = family === 'both' ? 'v4' : family;
   const rulesQ = useRules(familyForList, tableSel);
@@ -97,7 +106,6 @@ export const RulesPage: React.FC = () => {
   const stageMutation = (m: Mutation) => setStaged((s) => [...s, m]);
   const onEdit = (r: Rule) => setEditor({ open: true, rule: r });
   const onDelete = (r: Rule) => {
-    if (!confirm(`将「${r.raw}」加入暂存删除列表？`)) return;
     stageMutation({
       kind: 'delete',
       family: familyForList,
@@ -105,6 +113,24 @@ export const RulesPage: React.FC = () => {
       chain: r.chain,
       seq: r.seq,
     });
+    toast.success('已加入暂存区', { description: `删除 ${r.chain}#${r.seq + 1}` });
+  };
+  const onBatchDelete = () => {
+    if (selected.size === 0) return;
+    for (const seq of selected) {
+      const rule = visibleRules.find((r) => r.seq === seq);
+      if (rule) {
+        stageMutation({
+          kind: 'delete',
+          family: familyForList,
+          table: tableSel,
+          chain: rule.chain,
+          seq: rule.seq,
+        });
+      }
+    }
+    toast.success('已加入暂存区', { description: `批量删除 ${selected.size} 条规则` });
+    setSelected(new Set());
   };
   const onReorder = (newSeqOrder: number[]) => {
     setStaged((s) => {
@@ -133,6 +159,18 @@ export const RulesPage: React.FC = () => {
     if (staged.length === 0) return;
     apply.run(staged);
   };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onNew: () => setEditor({ open: true }),
+    onDelete: selected.size > 0 ? onBatchDelete : undefined,
+    onApply: staged.length > 0 ? onApply : undefined,
+    onEscape: () => {
+      if (selected.size > 0) setSelected(new Set());
+      else if (editor.open) setEditor({ open: false });
+    },
+    onFocusSearch: () => searchRef.current?.focus(),
+  });
 
   return (
     <div className="space-y-6">
@@ -163,6 +201,15 @@ export const RulesPage: React.FC = () => {
         onSubmit={stageMutation}
       />
 
+      <RuleImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        family={familyForList}
+        table={tableSel}
+        chain={chain}
+        onImport={(muts) => muts.forEach(stageMutation)}
+      />
+
       {/* Page header */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -177,6 +224,9 @@ export const RulesPage: React.FC = () => {
           <FamilySwitcher />
           <Button onClick={() => setEditor({ open: true })}>
             <PlusIcon /> 新建规则
+          </Button>
+          <Button variant="secondary" onClick={() => setImportOpen(true)}>
+            导入
           </Button>
         </div>
       </header>
@@ -235,6 +285,7 @@ export const RulesPage: React.FC = () => {
 
         <div className="ml-auto flex items-center gap-2">
           <Input
+            ref={searchRef}
             placeholder="搜索规则…"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -264,6 +315,23 @@ export const RulesPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Selection action bar */}
+      {selected.size > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-brand/30 bg-brand-tint/40 px-4 py-2.5">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-medium text-ink-strong">已选择 {selected.size} 条规则</span>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+              取消选择
+            </Button>
+            <Button variant="destructive" size="sm" onClick={onBatchDelete}>
+              批量删除
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Staged drawer (only when there are mutations) */}
       {staged.length > 0 && (
         <StagedDrawer
@@ -291,6 +359,9 @@ export const RulesPage: React.FC = () => {
             onDelete={onDelete}
             onReorder={onReorder}
             liveCounters={liveOn ? liveCountersRef.current : undefined}
+            selected={selected}
+            onSelectionChange={setSelected}
+            onCreateFromTemplate={() => navigate({ to: '/templates' })}
           />
         )}
       </QueryBoundary>
@@ -357,6 +428,7 @@ const StagedDrawer: React.FC<{
         </li>
       ))}
     </ul>
+    <ChangePreview mutations={staged} />
   </div>
 );
 

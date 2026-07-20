@@ -63,9 +63,10 @@ export const AuditPage: React.FC = () => {
                     <thead className="bg-canvas-tint border-b border-[var(--c-hairline)]">
                       <tr>
                         <th className="h-10 w-44 px-6 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">时间</th>
-                        <th className="h-10 w-32 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">用户</th>
+                        <th className="h-10 w-24 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">用户</th>
                         <th className="h-10 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">动作</th>
                         <th className="h-10 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">对象</th>
+                        <th className="h-10 w-32 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">来源 IP</th>
                         <th className="h-10 w-44 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">结果</th>
                       </tr>
                     </thead>
@@ -90,6 +91,9 @@ export const AuditPage: React.FC = () => {
                             </td>
                             <td className="px-4 py-3 font-mono text-xs text-ink-muted">
                               {r.target ?? '—'}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-xs text-ink-muted">
+                              {r.ip ?? '—'}
                             </td>
                             <td className="px-4 py-3">
                               <Badge variant={tone}>{r.result}</Badge>

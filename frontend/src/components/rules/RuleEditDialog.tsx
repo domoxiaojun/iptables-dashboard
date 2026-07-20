@@ -6,19 +6,45 @@ import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import type { Family, Mutation, Rule, RuleSpec, TableKind } from '@/types/api';
+
+// IP/CIDR validation: accepts IPv4 (1.2.3.4, 1.2.3.0/24) and IPv6 (::1, 2001:db8::/32)
+const IP_CIDR_RE = /^(!\s*)?((\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?|[0-9a-fA-F:]+(:[0-9a-fA-F:]*)?(\/\d{1,3})?)$/;
+// Port: number or range like 1024:65535
+const PORT_RE = /^(!\s*)?(\d{1,5})(:\d{1,5})?$/;
+// Interface name: alphanumeric, dots, hyphens, underscores
+const IFACE_RE = /^[a-zA-Z0-9_.+-]+$/;
 
 const formSchema = z.object({
   protocol: z.string().optional(),
-  source: z.string().optional(),
-  destination: z.string().optional(),
-  in_interface: z.string().max(15).optional(),
-  out_interface: z.string().max(15).optional(),
-  sport: z.string().optional(),
-  dport: z.string().optional(),
+  source: z.string().refine(
+    (v) => !v || v.trim() === '' || IP_CIDR_RE.test(v.trim()),
+    { message: '无效的 IP/CIDR 格式' },
+  ).optional(),
+  destination: z.string().refine(
+    (v) => !v || v.trim() === '' || IP_CIDR_RE.test(v.trim()),
+    { message: '无效的 IP/CIDR 格式' },
+  ).optional(),
+  in_interface: z.string().max(15).refine(
+    (v) => !v || v.trim() === '' || IFACE_RE.test(v.trim()),
+    { message: '接口名只能包含字母、数字、. _ + -' },
+  ).optional(),
+  out_interface: z.string().max(15).refine(
+    (v) => !v || v.trim() === '' || IFACE_RE.test(v.trim()),
+    { message: '接口名只能包含字母、数字、. _ + -' },
+  ).optional(),
+  sport: z.string().refine(
+    (v) => !v || v.trim() === '' || PORT_RE.test(v.trim()),
+    { message: '端口格式无效（如 22 或 1024:65535）' },
+  ).optional(),
+  dport: z.string().refine(
+    (v) => !v || v.trim() === '' || PORT_RE.test(v.trim()),
+    { message: '端口格式无效（如 80 或 1024:65535）' },
+  ).optional(),
   jump: z.string().optional(),
   reject_with: z.string().optional(),
-  log_prefix: z.string().optional(),
+  log_prefix: z.string().max(29).optional(),
   comment: z.string().max(256).optional(),
   also_other_family: z.boolean(),
 });
@@ -133,6 +159,11 @@ export const RuleEditDialog: React.FC<{
     }
     onSubmit(mutation);
     onOpenChange(false);
+    toast.success(isEdit ? '规则已修改' : '规则已加入暂存区', {
+      description: isEdit
+        ? `${chain} #${initial!.seq + 1}`
+        : `${family}/${table}/${chain}`,
+    });
   };
 
   return (

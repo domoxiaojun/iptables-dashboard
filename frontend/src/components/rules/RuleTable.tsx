@@ -27,6 +27,12 @@ export interface RuleTableProps {
   onDelete?: (r: Rule) => void;
   onReorder?: (newSeqOrder: number[]) => void;
   liveCounters?: Map<string, CounterSample>;
+  /** Currently selected rule seqs. */
+  selected?: Set<number>;
+  /** Called when selection changes. */
+  onSelectionChange?: (selected: Set<number>) => void;
+  /** Called when "create from template" is clicked in empty state. */
+  onCreateFromTemplate?: () => void;
 }
 
 export const RuleTable: React.FC<RuleTableProps> = ({
@@ -35,20 +41,59 @@ export const RuleTable: React.FC<RuleTableProps> = ({
   onDelete,
   onReorder,
   liveCounters,
+  selected,
+  onSelectionChange,
+  onCreateFromTemplate,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  const hasSelection = selected && onSelectionChange;
+
+  const toggleSelect = (seq: number, extend: boolean) => {
+    if (!hasSelection) return;
+    const next = new Set(selected);
+    if (extend && selected.size > 0) {
+      // Shift-click: select range
+      const seqs = rules.map((r) => r.seq);
+      const lastSelected = Array.from(selected).pop()!;
+      const startIdx = seqs.indexOf(lastSelected);
+      const endIdx = seqs.indexOf(seq);
+      const [lo, hi] = startIdx <= endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+      for (let i = lo; i <= hi; i++) next.add(seqs[i]);
+    } else if (next.has(seq)) {
+      next.delete(seq);
+    } else {
+      next.add(seq);
+    }
+    onSelectionChange(next);
+  };
+
+  const toggleSelectAll = () => {
+    if (!hasSelection) return;
+    const allSeqs = rules.map((r) => r.seq);
+    const allSelected = allSeqs.every((s) => selected.has(s));
+    onSelectionChange(allSelected ? new Set() : new Set(allSeqs));
+  };
+
   if (rules.length === 0) {
     return (
-      <div className="grid place-items-center gap-2 rounded-lg border border-dashed border-[var(--c-hairline-strong)] bg-canvas-tint/40 px-6 py-16 text-center">
+      <div className="grid place-items-center gap-3 rounded-lg border border-dashed border-[var(--c-hairline-strong)] bg-canvas-tint/40 px-6 py-16 text-center">
         <div className="grid h-10 w-10 place-items-center rounded-full bg-canvas-soft text-ink-dim">
           ◯
         </div>
         <p className="text-sm font-medium text-ink-strong">当前链中没有规则</p>
-        <p className="text-xs text-ink-muted">点击右上角「+ 新建规则」开始</p>
+        <p className="text-xs text-ink-muted">点击右上角「+ 新建规则」开始，或从模板快速添加</p>
+        {onCreateFromTemplate && (
+          <button
+            onClick={onCreateFromTemplate}
+            className="mt-2 rounded-md border border-brand/40 bg-brand-tint px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-tint/80 transition-colors"
+          >
+            从模板库添加 →
+          </button>
+        )}
       </div>
     );
   }
@@ -72,7 +117,17 @@ export const RuleTable: React.FC<RuleTableProps> = ({
         <table className="w-full caption-bottom text-sm tabular">
           <thead className="bg-canvas-tint border-b border-[var(--c-hairline)]">
             <tr>
-              {onReorder && <th className="w-8" />}
+              {hasSelection && (
+                <th className="w-8 px-2">
+                  <input
+                    type="checkbox"
+                    checked={rules.length > 0 && rules.every((r) => selected.has(r.seq))}
+                    onChange={toggleSelectAll}
+                    className="h-3.5 w-3.5 cursor-pointer accent-brand"
+                  />
+                </th>
+              )}
+              {onReorder && !hasSelection && <th className="w-8" />}
               <th className="h-10 w-14 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">#</th>
               <th className="h-10 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">规则</th>
               <th className="h-10 w-28 px-4 text-left text-2xs font-semibold uppercase tracking-wider text-ink-dim">动作</th>
@@ -86,7 +141,10 @@ export const RuleTable: React.FC<RuleTableProps> = ({
                 <RuleRow
                   key={`${r.chain}-${r.seq}`}
                   rule={r}
-                  draggable={!!onReorder}
+                  draggable={!!onReorder && !hasSelection}
+                  selectable={hasSelection}
+                  isSelected={selected?.has(r.seq) ?? false}
+                  onSelect={(extend) => toggleSelect(r.seq, extend)}
                   onEdit={onEdit}
                   onDelete={onDelete}
                   live={liveCounters?.get(counterKey(r))}
@@ -103,10 +161,13 @@ export const RuleTable: React.FC<RuleTableProps> = ({
 const RuleRow: React.FC<{
   rule: Rule;
   draggable: boolean;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onSelect?: (extend: boolean) => void;
   onEdit?: (r: Rule) => void;
   onDelete?: (r: Rule) => void;
   live?: CounterSample;
-}> = ({ rule: r, draggable, onEdit, onDelete, live }) => {
+}> = ({ rule: r, draggable, selectable, isSelected, onSelect, onEdit, onDelete, live }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: r.seq,
     disabled: !draggable,
@@ -125,9 +186,20 @@ const RuleRow: React.FC<{
       className={cn(
         'group border-b border-[var(--c-hairline)] transition-colors duration-fast',
         'hover:bg-canvas-tint',
+        isSelected && 'bg-brand-tint/30',
       )}
     >
-      {draggable && (
+      {selectable && (
+        <td className="px-2">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => onSelect?.(e.shiftKey)}
+            className="h-3.5 w-3.5 cursor-pointer accent-brand"
+          />
+        </td>
+      )}
+      {draggable && !selectable && (
         <td
           className="cursor-grab select-none px-2 text-ink-faint hover:text-ink-muted"
           {...attributes}
