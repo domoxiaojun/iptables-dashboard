@@ -156,7 +156,7 @@ const PreviewBlock: React.FC<{
   if (error) {
     return (
       <div className="mt-3 rounded-md border border-danger/30 bg-danger-tint/40 px-3 py-2 text-xs text-danger">
-        ⚠ {error}
+         {error}
       </div>
     );
   }
@@ -168,7 +168,7 @@ const PreviewBlock: React.FC<{
   const v4 = countOps(preview.v4_diff.ops);
   const v6 = countOps(preview.v6_diff.ops);
   return (
-    <div className="mt-3 space-y-1.5 rounded-md border border-[var(--c-hairline)] bg-canvas-tint/60 px-3 py-2">
+    <div className="mt-3 space-y-2 rounded-md border border-[var(--c-hairline)] bg-canvas-tint/60 px-3 py-2">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <Badge variant="outline">v4</Badge>
         <DiffCounts {...v4} />
@@ -178,7 +178,68 @@ const PreviewBlock: React.FC<{
       </div>
       {preview.guard_warnings.length > 0 && (
         <div className="text-xs text-warn">
-          ⚠ {preview.guard_warnings.length} 条 guard 警告（应用时需确认）
+           {preview.guard_warnings.length} 条 guard 警告（应用时需确认）
+        </div>
+      )}
+      {/* Show rule details */}
+      {(preview.v4_diff.ops.length > 0 || preview.v6_diff.ops.length > 0) && (
+        <div className="space-y-2 border-t border-[var(--c-hairline)] pt-2">
+          {preview.v4_diff.ops.length > 0 && (
+            <div>
+              <div className="mb-1 text-2xs font-medium text-ink-dim">IPv4 变更</div>
+              <ul className="space-y-0.5">
+                {preview.v4_diff.ops.map((op, i) => (
+                  <li
+                    key={i}
+                    className={cn(
+                      'rounded px-2 py-1 font-mono text-2xs',
+                      op.op === 'add' && 'bg-success-tint/40',
+                      op.op === 'remove' && 'bg-danger-tint/40',
+                      op.op === 'modify' && 'bg-warn-tint/40',
+                    )}
+                  >
+                    <span className={cn(
+                      'mr-1 font-bold',
+                      op.op === 'add' && 'text-success',
+                      op.op === 'remove' && 'text-danger',
+                      op.op === 'modify' && 'text-warn',
+                    )}>
+                      {op.op === 'add' ? '+' : op.op === 'remove' ? '−' : '~'}
+                    </span>
+                    {op.rule?.raw ?? op.from?.raw ?? op.to?.raw ?? '—'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {preview.v6_diff.ops.length > 0 && (
+            <div>
+              <div className="mb-1 text-2xs font-medium text-ink-dim">IPv6 变更</div>
+              <ul className="space-y-0.5">
+                {preview.v6_diff.ops.map((op, i) => (
+                  <li
+                    key={i}
+                    className={cn(
+                      'rounded px-2 py-1 font-mono text-2xs',
+                      op.op === 'add' && 'bg-success-tint/40',
+                      op.op === 'remove' && 'bg-danger-tint/40',
+                      op.op === 'modify' && 'bg-warn-tint/40',
+                    )}
+                  >
+                    <span className={cn(
+                      'mr-1 font-bold',
+                      op.op === 'add' && 'text-success',
+                      op.op === 'remove' && 'text-danger',
+                      op.op === 'modify' && 'text-warn',
+                    )}>
+                      {op.op === 'add' ? '+' : op.op === 'remove' ? '−' : '~'}
+                    </span>
+                    {op.rule?.raw ?? op.from?.raw ?? op.to?.raw ?? '—'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>
