@@ -33,6 +33,8 @@ export interface RuleTableProps {
   onSelectionChange?: (selected: Set<number>) => void;
   /** Called when "create from template" is clicked in empty state. */
   onCreateFromTemplate?: () => void;
+  /** Called when "import rules" is clicked in empty state. */
+  onImportRules?: () => void;
 }
 
 export const RuleTable: React.FC<RuleTableProps> = ({
@@ -44,6 +46,7 @@ export const RuleTable: React.FC<RuleTableProps> = ({
   selected,
   onSelectionChange,
   onCreateFromTemplate,
+  onImportRules,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -85,15 +88,25 @@ export const RuleTable: React.FC<RuleTableProps> = ({
           ◯
         </div>
         <p className="text-sm font-medium text-ink-strong">当前链中没有规则</p>
-        <p className="text-xs text-ink-muted">点击右上角「+ 新建规则」开始，或从模板快速添加</p>
-        {onCreateFromTemplate && (
-          <button
-            onClick={onCreateFromTemplate}
-            className="mt-2 rounded-md border border-brand/40 bg-brand-tint px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-tint/80 transition-colors"
-          >
-            从模板库添加 →
-          </button>
-        )}
+        <p className="text-xs text-ink-muted">点击右上角「+ 新建规则」开始，或从模板/导入快速添加</p>
+        <div className="mt-3 flex gap-2">
+          {onCreateFromTemplate && (
+            <button
+              onClick={onCreateFromTemplate}
+              className="rounded-md border border-brand/40 bg-brand-tint px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-tint/80 transition-colors"
+            >
+              从模板库添加 →
+            </button>
+          )}
+          {onImportRules && (
+            <button
+              onClick={onImportRules}
+              className="rounded-md border border-[var(--c-hairline)] bg-canvas-card px-3 py-1.5 text-xs font-medium text-ink-muted hover:text-ink-strong transition-colors"
+            >
+              导入规则
+            </button>
+          )}
+        </div>
       </div>
     );
   }

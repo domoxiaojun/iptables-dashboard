@@ -519,7 +519,7 @@ pub struct ImportError {
 }
 
 pub async fn import_rules(
-    State(app): State<AppState>,
+    State(_app): State<AppState>,
     Json(req): Json<ImportReq>,
 ) -> AppResult<Json<ImportResp>> {
     // Wrap the pasted text in a minimal iptables-save format if it's just

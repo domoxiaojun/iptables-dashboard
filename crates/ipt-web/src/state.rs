@@ -23,6 +23,7 @@ pub struct AppState {
     /// reparses several KB of text. See [`RulesCache::get_or_fetch`].
     pub rules_cache: RulesCache,
     /// When the process started — used for uptime calculation in /health.
+    #[allow(dead_code)]
     pub started_at: Instant,
 }
 
@@ -74,6 +75,7 @@ impl RulesCache {
         Ok(parsed)
     }
 
+    #[allow(dead_code)]
     pub async fn invalidate(&self, family: Family) {
         self.inner.write().await.remove(&family);
     }

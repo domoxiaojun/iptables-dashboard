@@ -55,10 +55,22 @@ export const AppShell: React.FC = () => {
   };
 
   // Idle timeout: auto-logout after 8h of inactivity.
-  useIdleTimeout(28800, () => {
-    toast.info('会话已过期', { description: '长时间未操作，请重新登录' });
-    logout();
-  });
+  // Show warning 5 minutes before timeout.
+  useIdleTimeout(
+    28800,
+    () => {
+      toast.info('会话已过期', { description: '长时间未操作，请重新登录' });
+      logout();
+    },
+    true,
+    300, // 5 minutes warning
+    (remaining) => {
+      toast.warning('会话即将过期', {
+        description: `距离自动登出还有 ${Math.round(remaining / 60)} 分钟，请继续操作以延长会话`,
+        duration: 10000,
+      });
+    },
+  );
 
   return (
     <div className="bg-aurora-warm relative flex min-h-screen">

@@ -35,6 +35,7 @@ pub enum AppError {
     /// Validation failure with structured per-field error messages so the
     /// frontend can call react-hook-form's `setError(field, ...)` directly.
     #[error("validation failed")]
+    #[allow(dead_code)]
     FieldValidation {
         message: String,
         field_errors: HashMap<String, String>,

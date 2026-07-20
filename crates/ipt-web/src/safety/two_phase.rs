@@ -58,8 +58,10 @@ enum Decision {
 #[derive(Debug, thiserror::Error)]
 pub enum SafetyError {
     #[error("token not found")]
+    #[allow(dead_code)]
     NotFound,
     #[error("token already finalized")]
+    #[allow(dead_code)]
     AlreadyFinalized,
 }
 

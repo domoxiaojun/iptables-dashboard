@@ -36,6 +36,7 @@ export const RulesPage: React.FC = () => {
   });
   const [importOpen, setImportOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<number>>(new Set());
+  const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
 
   const familyForList: Family = family === 'both' ? 'v4' : family;
   const rulesQ = useRules(familyForList, tableSel);
@@ -313,8 +314,35 @@ export const RulesPage: React.FC = () => {
               )}
             />
           </label>
+
+          <button
+            type="button"
+            onClick={() => setShortcutsOpen(!shortcutsOpen)}
+            className="flex items-center gap-1 rounded-md border border-[var(--c-hairline)] bg-canvas-card px-2.5 py-1.5 text-xs text-ink-muted hover:text-ink-strong transition-colors"
+            title="键盘快捷键"
+          >
+            <kbd className="rounded bg-canvas-soft px-1 font-mono text-2xs">?</kbd>
+            <span>快捷键</span>
+          </button>
         </div>
       </div>
+
+      {/* Keyboard shortcuts help */}
+      {shortcutsOpen && (
+        <div className="rounded-lg border border-[var(--c-hairline)] bg-canvas-card p-4 shadow-1">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-ink-strong">键盘快捷键</h3>
+            <button onClick={() => setShortcutsOpen(false)} className="text-ink-dim hover:text-ink-strong">✕</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <ShortcutRow keys="N" desc="新建规则" />
+            <ShortcutRow keys="Delete" desc="删除选中规则" />
+            <ShortcutRow keys="Ctrl+Enter" desc="应用暂存变更" />
+            <ShortcutRow keys="Esc" desc="清除选择 / 关闭对话框" />
+            <ShortcutRow keys="/" desc="聚焦搜索框" />
+          </div>
+        </div>
+      )}
 
       {/* Selection action bar */}
       {selected.size > 0 && (
@@ -363,6 +391,7 @@ export const RulesPage: React.FC = () => {
             selected={selected}
             onSelectionChange={setSelected}
             onCreateFromTemplate={() => navigate({ to: '/templates' })}
+            onImportRules={() => setImportOpen(true)}
           />
         )}
       </QueryBoundary>
@@ -523,3 +552,10 @@ function SearchIcon() {
     </svg>
   );
 }
+
+const ShortcutRow: React.FC<{ keys: string; desc: string }> = ({ keys, desc }) => (
+  <div className="flex items-center justify-between rounded-md bg-canvas-tint/40 px-2 py-1.5">
+    <span className="text-ink-muted">{desc}</span>
+    <kbd className="rounded bg-canvas-soft px-1.5 py-0.5 font-mono text-2xs text-ink-strong">{keys}</kbd>
+  </div>
+);
