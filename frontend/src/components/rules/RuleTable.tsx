@@ -50,7 +50,7 @@ export const RuleTable: React.FC<RuleTableProps> = ({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const hasSelection = selected && onSelectionChange;
+  const hasSelection = !!(selected && onSelectionChange);
 
   const toggleSelect = (seq: number, extend: boolean) => {
     if (!hasSelection) return;
@@ -194,7 +194,7 @@ const RuleRow: React.FC<{
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={(e) => onSelect?.(e.shiftKey)}
+            onChange={(e) => onSelect?.((e.nativeEvent as MouseEvent).shiftKey ?? false)}
             className="h-3.5 w-3.5 cursor-pointer accent-brand"
           />
         </td>

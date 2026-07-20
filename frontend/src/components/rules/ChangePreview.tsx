@@ -4,7 +4,7 @@ import * as React from 'react';
 import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
-import type { Mutation, PreviewResp, RuleDiff, DiffOp } from '@/types/api';
+import type { Mutation, PreviewResp, DiffOp } from '@/types/api';
 
 interface ChangePreviewProps {
   mutations: Mutation[];
