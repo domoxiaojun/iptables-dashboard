@@ -51,7 +51,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const COMMON_PROTOCOLS = ['', 'tcp', 'udp', 'icmp', 'ipv6-icmp', 'all'];
+const COMMON_PROTOCOLS = ['', 'tcp', 'udp', 'icmp', 'ipv6-icmp'];
 const COMMON_JUMPS = [
   '', 'ACCEPT', 'DROP', 'REJECT', 'LOG', 'RETURN', 'MASQUERADE', 'SNAT', 'DNAT', 'REDIRECT',
 ];
