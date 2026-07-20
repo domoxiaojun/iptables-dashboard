@@ -99,11 +99,13 @@ pub async fn build(state: AppState, config: Arc<Config>) -> anyhow::Result<axum:
         .layer(CompressionLayer::new())
         .layer(build_cors_layer(&config))
         .layer(TraceLayer::new_for_http())
-        .layer(auth_layer)
-        .with_state(state);
+        .layer(auth_layer);
 
-    // Apply security headers after all other layers so they are on every response.
+    // Apply security headers before with_state so the type stays Router<AppState>
     let app = apply_security_headers(app);
+
+    // Bind state to the router
+    let app = app.with_state(state);
 
     Ok(app)
 }
