@@ -27,7 +27,7 @@ export const RulesPage: React.FC = () => {
   const family = useUiStore((s) => s.family);
   const setTable = useUiStore((s) => s.setTable);
   const tableSel = useUiStore((s) => s.table) as TableKind;
-  const [chain, setChain] = React.useState<string>('INPUT');
+  const [chain, setChain] = React.useState<string>('__all__');
   const [filter, setFilter] = React.useState<string>('');
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [staged, setStaged] = React.useState<Mutation[]>([]);
@@ -53,12 +53,12 @@ export const RulesPage: React.FC = () => {
     ]),
   );
   React.useEffect(() => {
-    if (!chainsAvailable.includes(chain) && chainsAvailable[0]) {
+    if (chain !== '__all__' && !chainsAvailable.includes(chain) && chainsAvailable[0]) {
       setChain(chainsAvailable[0]);
     }
   }, [chainsAvailable, chain]);
-  const visibleRules = rules.filter((r) => r.chain === chain);
-  const policy = tableEntry?.chains.find((c) => c.name === chain)?.policy;
+  const visibleRules = chain === '__all__' ? rules : rules.filter((r) => r.chain === chain);
+  const policy = chain === '__all__' ? undefined : tableEntry?.chains.find((c) => c.name === chain)?.policy;
 
   const apply = useApply({
     invalidateKeys: [['rules', familyForList, tableSel], ['sync-badge']],
@@ -267,6 +267,7 @@ export const RulesPage: React.FC = () => {
           value={chain}
           onChange={(e) => setChain(e.target.value)}
         >
+          <option value="__all__">全部</option>
           {chainsAvailable.map((c) => (
             <option key={c} value={c}>
               {c}
